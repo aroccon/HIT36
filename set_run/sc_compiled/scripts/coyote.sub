@@ -1,0 +1,174 @@
+#!/bin/bash -l
+#BSUB -L /bin/bash
+#BSUB -J phs1024_01 
+#BSUB -n 256
+#BSUB -W 12:00
+#BSUB -q largeq
+#BSUB -o out.txt
+#BSUB -e err.txt
+#BSUB -m "cy-1 cy-2 cy-4 cy-5"
+
+#----------------------------------------------------------------------
+# setting the general parameters
+#----------------------------------------------------------------------
+
+# Loading the modules that the executable file was built with
+module purge
+module load  pgi/7.2-5  fftw openmpi-pgi
+
+# Directory and title
+run_dir=/scratch2/nata/reaturb/phs1024_01
+run_title=phs1024_01
+
+# yoru email address that all the spam will be sent to
+my_email=bogus@email.address
+
+# --- the new version of the program that has scalar with mean gradient
+# --- in it, and also somewhat different way of writing out files.
+program=~/bin/hit3d.x
+
+loader=mpirun
+#loader_opts='-v'
+loader_opts='-v -mca mpi_preconnect_all 1  -mca mpi_preconnect_oob 1'
+iter_last=000000
+iter_max=999999
+log=log.txt
+jobnum=`echo $LSB_JOBID`
+
+# --- putting the job parameters in the file job_parameters.txt
+runlimit=$(bjobs -l $LSB_JOBID | grep ' min of ' | awk -F " " '{print $1}')
+# --- since the startup takes immensly long time (about 10 minutes)
+# --- we shorten the runlimit by 10 minutes
+echo "$runlimit - 20.0" | bc > job_parameters.txt
+
+#----------------------------------------------------------------------
+# Function that finds the number of the last dump file
+#----------------------------------------------------------------------
+find_last_iter()
+{
+    list_restart_files=( `ls -1 $1.64.?????? 2>/dev/null` )
+    n_files=${#list_restart_files[*]}
+    if [ $n_files -eq 0 ]
+	then
+	iter_last=000000
+    else
+	restart_file=${list_restart_files[$n_files-1]}
+	iter_last=`echo $restart_file | sed 's/.*\..*\.\(.*\)/\1/'`
+    fi
+}
+
+#======================================================================
+# MAIN SCRIPT
+#======================================================================
+
+cd $run_dir
+if [ -f stop ]; then 
+	rm stop
+fi
+
+echo '=============================================================='>>$log
+echo "`date +'%D %R'` : JOB $LSB_JOBID started.">>$log
+echo "`date +'%D %R'` : run_dir   : $run_dir">>$log
+echo "`date +'%D %R'` : run_title : $run_title">>$log
+
+echo '=============================================================='
+echo "`date +'%D %R'` : JOB $LSB_JOBID started."
+echo '=============================================================='
+#----------------------------------------------------------------------
+# Getting the last dump file number.  If none, set to zero.
+#----------------------------------------------------------------------
+find_last_iter $run_title
+echo "`date +'%D %R'` : The restart iteration is $iter_last">>$log
+
+#----------------------------------------------------------------------
+# if the dump number is not smaller than the given iter_max, exit
+#----------------------------------------------------------------------
+if [ $iter_last -ge $iter_max ]; then
+    echo "The maximum iteration number ($iter_max) is acheived.">>$log
+    echo "Exiting."
+    exit 0
+fi
+
+#----------------------------------------------------------------------
+# if the iter_max is not acheived, need to run the calculation.
+# first change the ITMIN and ITMAX in the input file.
+#----------------------------------------------------------------------
+infile=$run_title.in
+echo "`date +'%D %R'` : Changing the file $infile">>$log
+sed "s/^\([0-9]\+\)\( \+\)\(ITMIN\)/$iter_last\2\3/g" < $infile > tmp.$$;
+sed "s/^\([0-9]\+\)\( \+\)\(ITMAX\)/$iter_max\2\3/g" < tmp.$$ > $infile;
+rm -f tmp.$$
+
+
+#----------------------------------------------------------------------
+# Mailing me that the job is about to start
+#----------------------------------------------------------------------
+line="[COYOTE] Job $jobnum <$run_title> $iter_last:$iter_max started (`date +'%D %R'`)"
+#mail $my_email -s "$line" <<EOF
+
+#EOF
+
+#----------------------------------------------------------------------
+# running the program
+#----------------------------------------------------------------------
+echo "`date +'%D %R'` : Executing the program...">>$log
+echo "`date +'%D %R'` : $loader $loader_opts $program $run_title">>$log
+
+$loader $loader_opts $program $run_title
+
+echo "`date +'%D %R'` : ...done.">>$log
+
+#----------------------------------------------------------------------
+# finding out how many iterations did it run
+#----------------------------------------------------------------------
+find_last_iter $run_title
+
+#----------------------------------------------------------------------
+# manually stopping the job
+#----------------------------------------------------------------------
+if [ -f "stop.job" ]; then 
+    echo "`date +'%D %R'` : found file stop.job, stopping.">>$log
+    exit 0
+fi
+
+#----------------------------------------------------------------------
+# find out if the program exited due to time termination
+#----------------------------------------------------------------------
+if [ -f 'd0000.txt' -a `tail -n 30 d0000.txt | grep -c ' TIME TER'` -ge 1 ]; then
+    echo "`date +'%D %R'` : Time termination reached, stopping">>$log
+    line="[COYOTE] Job $jobnum <$run_title> finished at $iter_last (`date +'%D %R'`)"
+    mail $my_email -s "$line" <<EOF
+ TIME TERMINATION
+EOF
+    exit 0
+fi
+
+#---------------------------------------------------------------------
+# find out if the program exited due to too big Courant number
+#----------------------------------------------------------------------
+if [ -f 'd0000.txt' -a `tail -n 30 d0000.txt | grep -c 'Courant number is too big'` -ge 1 ]; then
+    echo "`date +'%D %R'` : Courant number is too big, stopping">>$log
+    line="[COYOTE] Job $jobnum <$run_title>: COURANT NUMBER STOP (`date +'%D %R'`)"
+    mail $my_email -s "$line" <<EOF
+    COURANT NUMBER IS TOO BIG
+EOF
+    exit 0
+fi
+
+#----------------------------------------------------------------------
+# Mailing me that the job has stopped
+#----------------------------------------------------------------------
+line="[COYOTE] Job $jobnum <$run_title> finished at $iter_last (`date +'%D %R'`)"
+#gnuplot snapshot.gp
+#(uuencode 1.png 1.png;  uuencode 2.png 2.png; uuencode 3.png 3.png) | mail $my_email -s "$line"
+mail $my_email -s "$line"
+
+#----------------------------------------------------------------------
+# if it's less than iter_max, resubmit the job
+#----------------------------------------------------------------------
+if [ $iter_last -lt $iter_max ]; then
+    echo "`date +'%D %R'` : iter_max ($iter_max) is not acheived ($iter_last)">>$log
+    echo "`date +'%D %R'` : Submitting another job...">>$log
+    bsub < coyote.sub
+    echo "`date +'%D %R'` : Submitted.">>$log
+fi

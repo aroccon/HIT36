@@ -1,0 +1,135 @@
+#!/bin/bash
+
+#PBS -N fit.256.00
+#PBS -l nodes=8:ppn=8
+#PBS -l walltime=10:00:00        
+#PBS -o out.txt -e err.txt
+
+#----------------------------------------------------------------------
+# setting the general parameters
+#----------------------------------------------------------------------
+
+# Your email address for emails
+MY_EMAIL=bogus@email.address
+
+# Resolution and the run number
+RES=256
+RUN=00
+
+# Setting up the names
+RUN_NAME=${RES}_${RUN}
+RUN_DIR=$RES.$RUN
+
+WORK_DIR=~/research/runs/$RUN_DIR
+(( $RES < 1000 )) && RUN_TITLE=fit_${RES}_${RUN}
+(( $RES >= 1000 )) && RUN_TITLE=fit${RES}_${RUN}
+
+# Program name
+PROGRAM=~/research/source/hit3d-read-only/hit3d.x
+ITER_LAST=000000
+ITER_MAX=999999
+LOG=log.txt
+
+# Loader-related stuff
+LOADER=mpirun
+NUMPROCS=$(cat $PBS_NODEFILE | wc -l)
+LOADER_OPTS="-hostfile hosts.txt -v -mca mpi_preconnect_all 1  -mca mpi_preconnect_oob 1"
+
+# Job number
+JOBNUM=$(echo $PBS_JOBID | awk -F"." '{print $1}')
+
+#----------------------------------------------------------------------
+# Function that finds the number of the last dump file
+#----------------------------------------------------------------------
+find_last_iter()
+{
+    list_restart_files=( `/bin/ls -1 $1.64.?????? 2>/dev/null` )
+     n_files=${#list_restart_files[*]}
+     if [ $n_files -eq 0 ]
+ 	then
+ 	ITER_LAST=000000
+     else
+ 	restart_file=${list_restart_files[$n_files-1]}
+ 	ITER_LAST=`echo $restart_file | sed 's/.*\..*\.\(.*\)/\1/'`
+     fi
+
+#     ITER_LAST=$(/bin/ls -1 *.64.* | tail -n1 | awk -F"." '{print $NS}')
+}
+# --------------------------------------------------------------------
+#  The main script
+# --------------------------------------------------------------------
+
+# Go to working directory
+cd $WORK_DIR
+
+# Create the host file
+cp $PBS_NODEFILE hosts.txt
+
+# If there is a file "stop", remove it
+[ -f stop ]  && rm stop
+
+echo '=============================================================='>>$LOG
+echo "`date +'%D %R'` : JOB $JOBNUM started.">>$LOG
+echo "`date +'%D %R'` : WORK_DIR  : $WORK_DIR">>$LOG
+echo "`date +'%D %R'` : RUN_TITLE : $RUN_TITLE">>$LOG
+
+# Getting the last dump file number.  If none, set to zero.
+find_last_iter $RUN_TITLE
+echo "`date +'%D %R'` : ITER_LAST : $ITER_LAST">>$LOG
+
+
+# if the dump number is not smaller than the given iter_max, exit
+
+if [ $ITER_LAST -ge $ITER_MAX ]; then
+    echo "The maximum iteration number ($ITER_MAX) is reached.">>$LOG
+    echo "Exiting.">>$LOG
+    exit 0
+fi
+
+# if the iter_max is not acheived, need to run the calculation.
+# first change the ITMIN and ITMAX in the input file.
+
+INFILE=${RUN_TITLE}.in
+echo "`date +'%D %R'` : Changing the file $INFILE">>$LOG
+sed "s/^\([0-9]\+\)\( \+\)\(ITMIN\)/$ITER_LAST\2\3/g" < $INFILE > tmp.$$;
+sed "s/^\([0-9]\+\)\( \+\)\(ITMAX\)/$ITER_MAX\2\3/g" < tmp.$$ > $INFILE;
+rm -f tmp.$$
+
+
+# --- putting the job parameters in the file job_parameters.txt
+#runlimit=$(bjobs -l $PBS_JOBID | grep ' min of ' | awk -F " " '{print $1}')
+# --- since the startup takes immensly long time (about 10 minutes)
+# --- we shorten the runlimit by 10 minutes
+#echo "$runlimit - 10.0" | bc > job_parameters.txt
+echo "600" > job_parameters.txt
+
+# Mailing me that the job is about to start
+line="[WCR] Job $JOBNUM <$RUN_TITLE> $ITER_LAST started (`date +'%D %R'`)"
+mail $MY_EMAIL -s "$line" <<EOF
+
+EOF
+
+# running the program
+
+echo "`date +'%D %R'` : Executing the program...">>$LOG
+echo "`date +'%D %R'` : $LOADER $LOADER_OPTS $PROGRAM $RUN_TITLE">>$LOG
+
+$LOADER $LOADER_OPTS $PROGRAM $RUN_TITLE
+
+echo "`date +'%D %R'` : ...done.">>$LOG
+
+# finding out how many iterations did it run
+
+find_last_iter $RUN_TITLE
+
+echo "`date +'%D %R'` : The last iteration now is $ITER_LAST.">>$LOG
+
+# Mailing me that the job just ended
+line="[WCR] Job $JOBNUM <$RUN_TITLE> $ITER_LAST ended (`date +'%D %R'`)"
+(gnuplot snapshot.gp; uuencode 1.png 1.png; uuencode 2.png 2.png) | mail -s "$line" $MY_EMAIL
+
+EOF
+
+exit 0
+
+

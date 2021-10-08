@@ -8,7 +8,7 @@ machine="0"
 #echo "=                                 Running on                                 ="
 if [ "$machine" == "0" ]; then
 echo "=                            Local machine (OS X)                            ="
-cp ./os_x/makefile_osx ./source_code/makefile
+cp ./os_x/makefile_osx ./source_code/Makefile
 
 elif [ "$machine" == "1" ]; then
 echo "=                                   Local UNIX                               ="
@@ -16,13 +16,14 @@ fi
 ######################################################################################
 cd set_run
 #create the folder (if missing)
-mkidr -p sc_compiled
+mkdir -p sc_compiled
 mkdir -p results
 #clean the folders
-rm -r ./sc_compiled
-rm -r ./results
+rm -r sc_compiled/*
+rm -r results/*
+
 cd sc_compiled
-cp -r ../soure_code/* sc_compiled
+cp -r ../../source_code/* ./
 rm *.o
 rm *.mod
 make clean
