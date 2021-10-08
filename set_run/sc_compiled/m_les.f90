@@ -875,7 +875,7 @@ contains
 !--------------------------------------------------------------------------------
     if(iammaster) then
        if  (mod(itime,iprint1)==0) then
-          open(999,file='../results/les.gp', position='append')
+          open(999,file='../results/les.dat', position='append')
           if (n_les>0) then
              if (les_model.lt.10) then
                 energy = fields(1,1,1,3+n_scalars+1) / real(nxyz_all)

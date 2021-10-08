@@ -43,17 +43,17 @@ subroutine io_write_4
 
   ! velocities
   call xFFT3d(-1,1)
-  fname = 'u.'//file_ext
+  fname = '../results/u_'//file_ext//'.dat'
   tmp4(1:nx,1:ny,1:nz) = wrk(1:nx,1:ny,1:nz,1)
   call write_tmp4
 
   call xFFT3d(-1,2)
-  fname = 'v.'//file_ext
+  fname = '../results/v_'//file_ext//'.dat'
   tmp4(1:nx,1:ny,1:nz) = wrk(1:nx,1:ny,1:nz,2)
   call write_tmp4
 
   call xFFT3d(-1,3)
-  fname = 'w.'//file_ext
+  fname = '../results/w_'//file_ext//'.dat'
   tmp4(1:nx,1:ny,1:nz) = wrk(1:nx,1:ny,1:nz,3)
   call write_tmp4
 

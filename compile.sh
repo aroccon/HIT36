@@ -1,5 +1,5 @@
-SIM_NAME="BENCHMARK1"
-#mkdir set_run
+#sim name, at least 10 characters
+SIM_NAME="nameofthesim"
 # define machine
 # 0 : local (Mac)
 machine="0"
@@ -24,8 +24,12 @@ rm -r results/*
 
 cd sc_compiled
 cp -r ../../source_code/* ./
+rm hit36
 rm *.o
 rm *.mod
 make clean
 make
 rm *.o
+
+#running the code
+./hit36 $SIM_NAME

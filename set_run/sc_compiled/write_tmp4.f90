@@ -32,7 +32,7 @@ subroutine write_tmp4
      close(my_out)
   end if
 
-!======================================================================  
+!======================================================================
 
   return
 end subroutine write_tmp4
@@ -66,8 +66,7 @@ subroutine write_tmp4_all
   call MPI_FILE_CLOSE(fh,mpi_err)
   call MPI_INFO_FREE(mpi_info,mpi_err)
 
-!======================================================================  
+!======================================================================
 
   return
 end subroutine write_tmp4_all
-

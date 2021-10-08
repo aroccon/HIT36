@@ -7,7 +7,7 @@ INPUT FILE FOR THE SPECTRAL CODE WITH SCALARS   (example for v.1.0.0)
 200		ITMAX    last timestep
 10		IPRNT1   how often to calculate statistics
 200		IPRNT2   how often to write restart files
-500		IWRITE4  how often to write real*4 binary files
+200		IWRITE4  how often to write output files
 ----------------------------------------------------------------------
 10.0		TMAX     the maximum simulation time
 1.0 3           TRESCALE, NRESCALE  rescale time and # of rescales
@@ -40,7 +40,7 @@ INPUT FILE FOR THE SPECTRAL CODE WITH SCALARS   (example for v.1.0.0)
 ----------------------------------------------------------------------
 0               les_model, the LES model (0=none, see the README.txt)
 ----------------------------------------------------------------------
-0		nums, # of passive scalars. if > 0, read the following 
+0		nums, # of passive scalars. if > 0, read the following
 ----------------------------------------------------------------------
 ## scalars: type, Sc, infrared exp, peak wavenumber (see below)
 1      1.0     4.0    2.

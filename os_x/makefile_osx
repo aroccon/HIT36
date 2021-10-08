@@ -5,7 +5,7 @@ FCFLAGS_F90 = -fdefault-real-8 -ffree-form -ffree-line-length-none -fallow-argum
 LDFLAGS = -fdefault-real-8 -fdefault-integer-8 -finit-integer=0 -finit-real=zero -lmpi -lmpi -lfftw3 -lm
 
 # Program name
-PROG    = hit3d.x
+PROG    = hit36
 
 # Modules
 MODULES = m_openmpi.o\

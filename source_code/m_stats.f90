@@ -149,33 +149,33 @@ contains
 
        ! outputting all this in the stat1 file
 
-       inquire(file='stat1.gp', exist=there, opened=there2)
+       inquire(file='../results/stat1.dat', exist=there, opened=there2)
        if (.not.there) then
-          open(69,file='stat1.gp',form='formatted')
+          open(69,file='../results/stat1.dat',form='formatted')
           write(69,*) '# 1.itime 2.time         3.energy       4.diss         5.eta          6.enstrophy    7.R_lambda'
        end if
        if(there.and..not.there2) then
-          open(69,file='stat1.gp',position='append')
+          open(69,file='../results/stat1.dat',position='append')
        end if
        write(69,"(i8,20e15.6)") itime, time, energy, eps_v, eta, enstrophy, re_lambda
        call flush(69)
 
        ! outputting all this in the stat2 file
 
-       inquire(file='stat2.gp', exist=there, opened=there2)
+       inquire(file='../results/stat2.dat', exist=there, opened=there2)
        if (.not.there) then
-          open(70,file='stat2.gp',form='formatted')
+          open(70,file='../results/stat2.dat',form='formatted')
           write(70,'(A)') '# 1.itime  2.time         3.int LS       4. lambda      5.R_lambda1    6.tau_e        7.etakmax'
        end if
        if(there.and..not.there2) then
-          open(70,file='stat2.gp',position='append')
+          open(70,file='../results/stat2.dat',position='append')
        end if
        write(70,"(i8,20e15.6)") itime, time, x_length, lambda, re_lambda1, tau_e, etakmax
        call flush(70)
 
 
        ! outputting the energy spectrum
-       open(900,file='es.gp',position='append')
+       open(900,file='../results/es.dat',position='append')
        write(900,"()")
        write(900,"()")
        write(900,"('# ITIME=',i7,' TIME=',e17.8)") ITIME, TIME
