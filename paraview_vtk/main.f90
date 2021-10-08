@@ -4,13 +4,12 @@ use commondata
 
 implicit none
 
-integer :: nstart,nstep,nend
 integer :: i,j,k
 logical :: check
 character(len=40) :: namefile
 
 nstart=0
-nstep=200
+dump=200
 nend=200
 
 nx=64
@@ -40,8 +39,8 @@ do k=1,nz-1
 enddo
 
 ! read fluid data
-do i=nstart,nstep,nend
- call read_fields(nstep)
+do i=nstart,nend,dump
+ call read_fields(i)
 enddo
 
 deallocate(x,y,z)

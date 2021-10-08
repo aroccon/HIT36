@@ -92,7 +92,7 @@ buffer='DATASET RECTILINEAR_GRID'//lf
  do k=z_start,z_end,dnz
   do j=y_start,y_end,dny
    do i=x_start,x_end,dnx
-    write(66) real(u(i,k,j))
+    write(66) real(u(i,j,k))
    enddo
   enddo
  enddo
@@ -104,7 +104,7 @@ buffer='DATASET RECTILINEAR_GRID'//lf
  do k=z_start,z_end,dnz
   do j=y_start,y_end,dny
    do i=x_start,x_end,dnx
-    write(66) real(v(i,k,j))
+    write(66) real(v(i,j,k))
    enddo
   enddo
  enddo

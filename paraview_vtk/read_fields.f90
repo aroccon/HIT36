@@ -4,7 +4,7 @@ use commondata
 
 integer :: nstep
 character(len=40) :: namedir,namefile
-character(len=8) :: numfile
+character(len=6) :: numfile
 character(len=3) :: setnum
 logical :: check
 
@@ -17,9 +17,13 @@ write(numfile,'(i6.6)') nstep
 
 ! check if u file exists; if u exists we assume that also v and w exist
 namefile=trim(namedir)//'u_'//numfile//'.dat'
+write(*,*) namefile
 inquire(file=trim(namefile),exist=check)
 
 
+allocate(u(nx,ny,nz))
+allocate(v(nx,ny,nz))
+allocate(w(nx,ny,nz))
 
 if(check.eqv..true.)then
 write(*,*) 'Reading step ',nstep,' out of ',nend,' , flow'
@@ -42,6 +46,9 @@ write(*,*) 'Reading step ',nstep,' out of ',nend,' , flow'
   call generate_output(nstep)
 endif
 
+deallocate(u)
+deallocate(v)
+deallocate(w)
 
 return
 end
