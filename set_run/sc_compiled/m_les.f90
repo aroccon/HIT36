@@ -422,7 +422,7 @@ contains
 !  need any additional initialization beside the array allocation which has
 !  been already done.
 !--------------------------------------------------------------------------------
-    case(0) 
+    case(0)
        return
     case(1)
        return
@@ -676,7 +676,7 @@ contains
     end select
 
 !--------------------------------------------------------------------------------
-!  Making sure that we are not getting any aliasing errors. That is done by 
+!  Making sure that we are not getting any aliasing errors. That is done by
 !  making RHS zero for wavenumbers that are aliased.
 !--------------------------------------------------------------------------------
     do k = 1, nz
@@ -723,7 +723,7 @@ contains
        call m_les_lag_model_sources
        call m_les_rhss_turb_visc
 !--------------------------------------------------------------------------------
-    case(4) 
+    case(4)
        ! -- Dynamic Structure Model with algebraic model for dissipation
        ! First taking care of the passive scalars (don't have them for now)
        if (n_scalars .gt. 0) then
@@ -741,7 +741,7 @@ contains
        call m_les_k_diss_algebraic
        call m_les_rhss_turb_visc
 !--------------------------------------------------------------------------------
-    case(5) 
+    case(5)
        ! -- Dynamic Structure Model with lag-model for dissipation
        ! First taking care of the passive scalars (don't have them for now)
        if (n_scalars .gt. 0) then
@@ -756,7 +756,7 @@ contains
        ! so need to add that term.
 
        ! getting sources for velocities and production for k_s and B
-       call m_les_dstm_vel_k_sources  
+       call m_les_dstm_vel_k_sources
        ! getting |S|^2 and putting it into wrk0 (for the timescale for B)
        call m_les_k_src_dlm
        ! getting the sources and sinks for (BT) and (eps T) and a sink for k_s
@@ -765,7 +765,7 @@ contains
        call m_les_rhss_turb_visc
 
 !--------------------------------------------------------------------------------
-    case(6) 
+    case(6)
        ! Mixed model (Dynamic Structure model + a fraction of Dynamic Localization model)
        ! The fraction is given by the constant C_mixed, which is read from the file
        ! This is taken care of in les_get_turb_visc
@@ -783,7 +783,7 @@ contains
        ! so need to add that term.
 
        ! getting DSTM sources for velocities and production for k_sgs
-       call m_les_dstm_vel_k_sources  
+       call m_les_dstm_vel_k_sources
        ! getting the DLM transfer term turb_visc*|S|^2 and adding to the RHS for k_sgs
        call m_les_k_src_dlm
        ! diffusing k_sgs with turbulent viscosity
@@ -792,7 +792,7 @@ contains
        call m_les_k_diss_algebraic
 
 !--------------------------------------------------------------------------------
-    case(7) 
+    case(7)
        ! Mixed model (Dynamic Structure model + a fraction of Dynamic Localization model)
        ! The fraction is given by the constant C_mixed, which is read from the file
        ! This is taken care of in les_get_turb_visc
@@ -813,7 +813,7 @@ contains
        ! so need to add that term.
 
        ! getting sources for velocities and production for k_s and B
-       call m_les_dstm_vel_k_sources  
+       call m_les_dstm_vel_k_sources
        ! getting |S|^2 and putting it into wrk0 (for the timescale for B)
        call m_les_k_src_dlm
        ! getting the sources and sinks for (BT) and (eps T) and a sink for k_s
@@ -822,7 +822,7 @@ contains
        call m_les_rhss_turb_visc
 
 !--------------------------------------------------------------------------------
-    case(10) 
+    case(10)
        ! Mixed model (Dynamic Structure model + a fraction of Smagorinsky model)
        ! The fraction is given by the constant C_mixed, which is read from the file
        ! c_mixed.in
@@ -835,7 +835,7 @@ contains
        call m_les_rhss_turb_visc1(3+n_scalars+1)
        call m_les_rhss_turb_visc1(3+n_scalars+2)
 
-       ! now calculate the SGS stress tauij and calculate the source term Pi 
+       ! now calculate the SGS stress tauij and calculate the source term Pi
        ! for (BT), the scalar with the number 3+n_scalars+1
        ! Add the source term for (BT) to the RHS for (BT)
        ! Store the SGS stress in the array tauij.
@@ -857,7 +857,7 @@ contains
     end select
 
 !--------------------------------------------------------------------------------
-!  Making sure that we are not getting any aliasing errors. That is done by 
+!  Making sure that we are not getting any aliasing errors. That is done by
 !  making RHS zero for wavenumbers that produce aliasing.
 !--------------------------------------------------------------------------------
     do k = 1, nz
@@ -875,7 +875,7 @@ contains
 !--------------------------------------------------------------------------------
     if(iammaster) then
        if  (mod(itime,iprint1)==0) then
-          open(999,file='les.gp', position='append')
+          open(999,file='../results/les.gp', position='append')
           if (n_les>0) then
              if (les_model.lt.10) then
                 energy = fields(1,1,1,3+n_scalars+1) / real(nxyz_all)
@@ -896,7 +896,7 @@ contains
 
 !================================================================================
 !================================================================================
-!  calculating LES sources for velocity field and adding them to the 
+!  calculating LES sources for velocity field and adding them to the
 !  RHS's (wrk1...3)
 !================================================================================
   subroutine les_rhsv_turb_visc
@@ -932,7 +932,7 @@ contains
     ! Multiplying them by  -2 * turbulent viscosity to get tau_11, tau_12, tau_13
     do n = 4,6
        call xFFT3d(-1,n)
-       wrk(1:nx,1:ny,1:nz,n) = - two * turb_visc(1:nx,1:ny,1:nz) * wrk(1:nx,1:ny,1:nz,n) 
+       wrk(1:nx,1:ny,1:nz,n) = - two * turb_visc(1:nx,1:ny,1:nz) * wrk(1:nx,1:ny,1:nz,n)
        call xFFT3d(1,n)
     end do
 
@@ -986,13 +986,13 @@ contains
     ! Multiplying them by -2 * turbulent viscosity to get tau_22, tau_23, tau_33
     do n = 4,6
        call xFFT3d(-1,n)
-       wrk(1:nx,1:ny,1:nz,n) = - two * turb_visc(1:nx,1:ny,1:nz) * wrk(1:nx,1:ny,1:nz,n) 
+       wrk(1:nx,1:ny,1:nz,n) = - two * turb_visc(1:nx,1:ny,1:nz) * wrk(1:nx,1:ny,1:nz,n)
        call xFFT3d(1,n)
     end do
 
     ! Taking
     ! d/dy tau_22, d/dz tau_23
-    ! d/dy tau_23, d/dz tau_33 
+    ! d/dy tau_23, d/dz tau_33
     ! and subtracting from the current RHS for v and w
     ! note the sign reversal (-/+) because we subtract this from RHS
     do k = 1, nz
@@ -1019,11 +1019,11 @@ contains
 
 !================================================================================
 !================================================================================
-!    calculating LES sources for scalars and adding them to the RHS's 
+!    calculating LES sources for scalars and adding them to the RHS's
 !    wrk4...3+n_scalars+n_les
 !
 !    case when SGS stress tau_ij is modeled using turbulent viscosity
-!    the turb. viscosity is supposed to be in the array turb_visc(nx,ny,nz) 
+!    the turb. viscosity is supposed to be in the array turb_visc(nx,ny,nz)
 !================================================================================
   subroutine m_les_rhss_turb_visc
     implicit none
@@ -1356,7 +1356,7 @@ contains
        ! write(out,*) 'LES_GET_TURB_VISC_DLM: minval of k is less than 0:',sctmp
        ! call flush(out)
        ! call my_exit(-1)
-       wrk(:,:,:,0) = max(wrk(:,:,:,0), zip)       
+       wrk(:,:,:,0) = max(wrk(:,:,:,0), zip)
     end if
 
     turb_visc(1:nx,1:ny,1:nz) = C_k * les_delta * sqrt(wrk(1:nx,1:ny,1:nz,0))
@@ -1414,7 +1414,7 @@ contains
 
 !================================================================================
 !================================================================================
-!  Subroutine that calculates the source for k_sgs:   - tau_{ij} S_{ij} 
+!  Subroutine that calculates the source for k_sgs:   - tau_{ij} S_{ij}
 !  for the case of Dynamic Localization Model (DLM)
 !
 !  If called while les_model=5, then just calculate |S|^2 and put it into wrk0
@@ -1458,7 +1458,7 @@ contains
        end do
     end do
     ! converting to real space, squaring and adding to wrk0
-    call xFFT3d(-1,n1);  call xFFT3d(-1,n2); 
+    call xFFT3d(-1,n1);  call xFFT3d(-1,n2);
     wrk(:,:,:,0) = wrk(:,:,:,0) + wrk(:,:,:,n1)**2 + two*wrk(:,:,:,n2)**2
 
     ! calculating S_13, S_22
@@ -1477,7 +1477,7 @@ contains
        end do
     end do
     ! converting to real space, squaring and adding to wrk0
-    call xFFT3d(-1,n1);  call xFFT3d(-1,n2); 
+    call xFFT3d(-1,n1);  call xFFT3d(-1,n2);
     wrk(:,:,:,0) = wrk(:,:,:,0) + two*wrk(:,:,:,n1)**2 + wrk(:,:,:,n2)**2
 
     ! calculating S_23, S_33
@@ -1496,7 +1496,7 @@ contains
        end do
     end do
     ! converting to real space, squaring and adding to wrk0
-    call xFFT3d(-1,n1);  call xFFT3d(-1,n2); 
+    call xFFT3d(-1,n1);  call xFFT3d(-1,n2);
     wrk(:,:,:,0) = wrk(:,:,:,0) + two*wrk(:,:,:,n1)**2 + wrk(:,:,:,n2)**2
 
     ! at this point wrk0 contains S_{ij} S_{ij} in real space.
@@ -1577,7 +1577,7 @@ contains
     ! get the SGS kinetic energy in x-space
     wrk(:,:,:,0) = fields(:,:,:,n_k)
 
-    ! first zero the modes that can produce aliasing 
+    ! first zero the modes that can produce aliasing
     do k = 1, nz
        do j = 1, ny
           do i = 1, nx+2
@@ -1622,7 +1622,7 @@ contains
 
 !================================================================================
 !================================================================================
-!  Model No. 3: 
+!  Model No. 3:
 !  - Dynamic Localization model for tau_{ij} with constant coefficients
 !  - Lag-model for the dissipation term (extra two equations)
 !  - turbulent viscosity for all scalars and velocities = sqr(k) * Delta
@@ -1676,10 +1676,10 @@ contains
              if (ialias(i,j,k) .eq. 0) then
 
                 ! updating the RHS for k_sgs (subtracting epsilon)
-                wrk(i,j,k,nk) = wrk(i,j,k,nk) - wrk(i,j,k,n2) 
+                wrk(i,j,k,nk) = wrk(i,j,k,nk) - wrk(i,j,k,n2)
 
                 ! updating the RHS for B (adding Pi and subtracting B)
-                ! note that Pi is already added in subroutines 
+                ! note that Pi is already added in subroutines
                 ! m_les_dstm_vel_k_sources and m_les_k_src_dlm
                 wrk(i,j,k,nk+1) = wrk(i,j,k,nk+1) - wrk(i,j,k,n1)
 
@@ -1734,7 +1734,7 @@ contains
     n5 = 3 + n_scalars + n_les + 4
     nk = 3 + n_scalars + 1
 
-    ! converting k_sgs to x-space and placing it in wrk1 
+    ! converting k_sgs to x-space and placing it in wrk1
     wrk(:,:,:,n1) = fields(:,:,:,nk)
 
     call xFFT3d(-1,n1)
@@ -1795,11 +1795,11 @@ contains
 !wrk(:,:,:,n1) = two * wrk(:,:,:,n1)  / max(wrk(:,:,:,n2),1.d-15)
 !<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><> DEBUG+
     ! Now we want to clip the scaling factor to be non-negative.
-    ! This is done in order to make the energy transfer from the DSTM 
-    ! non-negative at the places where k_sgs = 0.    
-    ! Basically we shut down the DSTM energy transfer where k<=0 
-    ! and let the diffusion work.  
-    ! 
+    ! This is done in order to make the energy transfer from the DSTM
+    ! non-negative at the places where k_sgs = 0.
+    ! Basically we shut down the DSTM energy transfer where k<=0
+    ! and let the diffusion work.
+    !
     ! Formixed models, the viscous part of the model should provide
     ! enough positive energy transfer to over come the nagetiveness.
     ! Although that does not happen as fast as we want.
@@ -1856,7 +1856,7 @@ contains
           call xFFT3d(-1,n5)
 
           ! hat(u_i u_j) -> wrk2
-          wrk(:,:,:,n2) = wrk(:,:,:,n2) * wrk(:,:,:,n3)           
+          wrk(:,:,:,n2) = wrk(:,:,:,n2) * wrk(:,:,:,n3)
           call xFFT3d(1,n2)
           call filter_xfftw(n2)
           call xFFT3d(-1,n2)
@@ -1877,7 +1877,7 @@ contains
 !<><><><><><><><><><><><><><><><><><><><><><><><><><><><><> DEBUG -
 
 
-          ! The source in k-equation is really - du_i/dx_j * tau_{ij} 
+          ! The source in k-equation is really - du_i/dx_j * tau_{ij}
           wrk(:,:,:,n3) = fields(:,:,:,i)
           call x_derivative(n3,dir_j,n3)
           call xFFT3d(-1,n3)
@@ -1943,7 +1943,7 @@ contains
           if (iammaster) production = production + wrk(1,1,1,n5) / real(nxyz_all)
 !!$          if (iammaster .and. j>i) production = production + wrk(1,1,1,n5) / real(nxyz_all)
 
-          ! doing the budget: counting the positive and negative production 
+          ! doing the budget: counting the positive and negative production
           ! (i.e., forward and backward scatter)
           call xFFT3d(-1,n5)
           do kk=1,nz
@@ -2000,7 +2000,7 @@ contains
 
 !================================================================================
 !================================================================================
-!  Calculating the subgrid stress tauij(:,:,:,:) using mixed model: DSTM+C_m*SM.  
+!  Calculating the subgrid stress tauij(:,:,:,:) using mixed model: DSTM+C_m*SM.
 !  Assume that the SGS dissipation is closed using the lag-model.
 !  Using the fact that S_ij is calculated prior to calling this subroutine
 !  and is stored in the array tauij, we calculate the source term
@@ -2088,7 +2088,7 @@ contains
     wrk(:,:,:,n5) = &
          - wrk(:,:,:,n1) * tauij(:,:,:,1) &
          - wrk(:,:,:,n2) * tauij(:,:,:,4) &
-         - wrk(:,:,:,n3) * tauij(:,:,:,6) 
+         - wrk(:,:,:,n3) * tauij(:,:,:,6)
 
     ! computing the diagonal elements of tau_ij
     tauij(1:nx,:,:,1) = &
@@ -2102,13 +2102,13 @@ contains
          C_mixed * two * turb_visc(1:nx,:,:) * tauij(1:nx,:,:,6)
 
     ! currently wrk4 has the scaling factor from DSTM model: (2k_sgs/L_kk)
-    ! and wrk5 has the part of the energy transfer term given by DSTM model 
+    ! and wrk5 has the part of the energy transfer term given by DSTM model
     ! (only diagonal terms so far),
     ! not the whole mixed model
     ! this means that the free arrays are wrk1...3
 
     ! computing the off-diagonal parts of tau_ij and their contribution to the energy tansfer
-    ! the index n will be the corresponding index in the tauij array, since 
+    ! the index n will be the corresponding index in the tauij array, since
     ! the elements of tauij are : tau_11, tau_12, 13, 22, 23, 33.
 
     ! NOTE: This is done in an inefficient way, with a good possibility of a speedup
@@ -2184,9 +2184,9 @@ contains
 !  Calculate the SGS fluxes for all scalars using Harlow model.
 !  The timescale is 1/|S|.  |S| is taken from the turbulent viscosity that was
 !  calculated earlier and is in the array turb_visc.  The formula for turb_visc:
-!  turb_visc = (c_smag * Delta)^2 |S| 
+!  turb_visc = (c_smag * Delta)^2 |S|
 !  The formula for the SGS flux of a scalar using Harlow model is
-!  flux = d/dx ( 1/|S| tau_ij d(phi)/dx_i ) 
+!  flux = d/dx ( 1/|S| tau_ij d(phi)/dx_i )
 !================================================================================
   subroutine m_les_rhss_sgs_flux_harlow
 
@@ -2203,7 +2203,7 @@ contains
     n5 = 3 + n_scalars + n_les + 4
 
     ! first, get the |S| from the turb_visc array and put it in wrk5
-    wrk(1:nx,:,:,n5) = turb_visc(1:nx,:,:) / (c_smag * les_delta)**2 
+    wrk(1:nx,:,:,n5) = turb_visc(1:nx,:,:) / (c_smag * les_delta)**2
     ! inverting it so we have the timescale 1/|S|
     do k = 1,nz
        do j = 1,ny
@@ -2240,7 +2240,7 @@ contains
        ! take the derivative d/dx_i
        ! add to the RHS of the scalar transport equation
 
-       ! i = 1 
+       ! i = 1
        wrk(:,:,:,n4) = tauij(:,:,:,1)*wrk(:,:,:,n1) + tauij(:,:,:,2)*wrk(:,:,:,n2) + tauij(:,:,:,3)*wrk(:,:,:,n3)
        wrk(:,:,:,n4) = wrk(:,:,:,n4) * wrk(:,:,:,n5)
        call xFFT3d(1,n4)
@@ -2248,7 +2248,7 @@ contains
        ! adding to the RHS
        wrk(:,:,:,3+n) = wrk(:,:,:,3+n) + wrk(:,:,:,n4)
 
-       ! i = 2 
+       ! i = 2
        wrk(:,:,:,n4) = tauij(:,:,:,2)*wrk(:,:,:,n1) + tauij(:,:,:,4)*wrk(:,:,:,n2) + tauij(:,:,:,5)*wrk(:,:,:,n3)
        wrk(:,:,:,n4) = wrk(:,:,:,n4) * wrk(:,:,:,n5)
        call xFFT3d(1,n4)
@@ -2256,7 +2256,7 @@ contains
        ! adding to the RHS
        wrk(:,:,:,3+n) = wrk(:,:,:,3+n) + wrk(:,:,:,n4)
 
-       ! i = 3 
+       ! i = 3
        wrk(:,:,:,n4) = tauij(:,:,:,3)*wrk(:,:,:,n1) + tauij(:,:,:,5)*wrk(:,:,:,n2) + tauij(:,:,:,6)*wrk(:,:,:,n3)
        wrk(:,:,:,n4) = wrk(:,:,:,n4) * wrk(:,:,:,n5)
        call xFFT3d(1,n4)
@@ -2270,14 +2270,14 @@ contains
   end subroutine m_les_rhss_sgs_flux_harlow
 !================================================================================
 !================================================================================
-!  Sources for the lag-model quantities (BT) and (eps*T) that arise from the 
+!  Sources for the lag-model quantities (BT) and (eps*T) that arise from the
 !  lag-model:
 !  *  for (BT) the source is (-B)
 !  * for (eps T) the sources are (+ B) and (- eps)
-!  
+!
 !  This version caters to the model that does NOT have a separate transport
-!  equation for k_sgs.  Thus the number are 
-!  3+n_scalars+1 for (BT), and 3+n_scalars+2 for (eps*T) 
+!  equation for k_sgs.  Thus the number are
+!  3+n_scalars+1 for (BT), and 3+n_scalars+2 for (eps*T)
 !================================================================================
   subroutine m_les_lag_model_sources_no_k
 
@@ -2322,7 +2322,7 @@ contains
     call xFFT3d(1,n2)
 
     ! Now we have B and epsilon, so we can update the RHS for (BT) and (eps * T)
-    ! with the sources.  
+    ! with the sources.
 
     ! updating the RHS for B (subtracting B)
     wrk(:,:,:,n_bt) = wrk(:,:,:,n_bt) - wrk(:,:,:,n1)
