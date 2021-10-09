@@ -29,7 +29,7 @@ y=0.0d0
 z=0.0d0
 
 do i=1,nx-1
-  x(i+1)=x(1)+dx
+  x(i+1)=x(i)+dx
 enddo
 do j=1,ny-1
   y(j+1)=y(j)+dy

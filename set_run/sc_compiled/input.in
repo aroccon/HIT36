@@ -4,7 +4,7 @@ INPUT FILE FOR THE SPECTRAL CODE WITH SCALARS   (example for v.1.0.0)
 64 64 64 	dimensions of the grid
 ----------------------------------------------------------------------
 000000          ITMIN    first timestep (if >0, restart from saved)
-200		ITMAX    last timestep
+10000		ITMAX    last timestep
 10		IPRNT1   how often to calculate statistics
 200		IPRNT2   how often to write restart files
 200		IWRITE4  how often to write output files
