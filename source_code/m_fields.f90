@@ -1,110 +1,82 @@
 module m_fields
+implicit none
+real*8, allocatable :: fields(:,:,:,:)
 
-  implicit none
 
-  real*8, allocatable :: fields(:,:,:,:)
-
-!================================================================================
 contains
-!================================================================================
 
-  subroutine m_fields_init
 
-    use m_io
-    use m_parameters
-    implicit none
 
-    integer :: n
+subroutine m_fields_init
+use m_parameters
+implicit none
+integer :: n
 
-    n = 3 + n_scalars + n_les
+n = 3 + n_scalars
+allocate(fields(nx+2,ny,nz,n), stat=ierr)
+!if (ierr.ne.0) then
+!  write(*,*) "Cannot allocate fields, stopping."
+!  call my_exit(-1)
+!end if
+fields = 0.0d0
+!write(*,"('Allocated ',i3,' fields.')") n
+return
+end subroutine m_fields_init
 
-    allocate(fields(nx+2,ny,nz,n), stat=ierr)
-    if (ierr.ne.0) then
-       write(out,*) "Cannot allocate fields, stopping."
-       call my_exit(-1)
+
+
+
+
+
+
+
+
+subroutine m_fields_exit
+!  use m_io
+implicit none
+if (allocated(fields)) deallocate(fields)
+!write(*,*) 'fields deallocated.'
+return
+end subroutine m_fields_exit
+
+
+
+
+
+
+!  Subroutine that broadcasts the array "fields" from the hydro to stats
+subroutine fields_to_stats
+use m_openmpi
+use m_parameters
+implicit none
+integer :: n_field, n_proc, k, ratio, n_scalars_bcast
+
+! first send it to the root process of the stats part
+count = 1
+tag = 0
+if (iammaster) then
+  if (task.eq.'hydro') call MPI_SEND(TIME,count,MPI_REAL8,id_root_stats,tag,MPI_COMM_WORLD,mpi_err)
+  if (task.eq.'stats') call MPI_RECV(TIME,count,MPI_REAL8,id_root_hydro,tag,MPI_COMM_WORLD,mpi_status,mpi_err)
+end if
+  if (task.eq.'stats') then
+    call MPI_BCAST(TIME,count,MPI_REAL8,0,MPI_COMM_TASK,mpi_err)
+    ! checking if we need to start advancing scalars
+    if (.not. int_scalars .and. TIME .gt. TSCALAR) then
+      int_scalars = .true.
+      write(*,*) "Starting to move the scalars."
     end if
-    fields = zip
+  end if
 
-    write(out,"('Allocated ',i3,' fields.')") n
-    call flush(out)
-
-
-    return
-  end subroutine m_fields_init
-
-!================================================================================
-
-  subroutine m_fields_exit
-    use m_io
-    implicit none
-
-    if (allocated(fields)) deallocate(fields)
-
-    write(out,*) 'fields deallocated.'
-    call flush(out)
-
-    return
-  end subroutine m_fields_exit
-
-!================================================================================
-
-
-!--------------------------------------------------------------------------------
-!  Subroutine that broadcasts the array "fields" from the hydro part to the 
-!  "stats" part of the code
-!--------------------------------------------------------------------------------
-  subroutine fields_to_stats
-
-    use m_openmpi
-    use m_parameters
-    use m_io
-    implicit none
-
-    integer :: n_field, n_proc, k, ratio, n_scalars_bcast
-
-    ! broadcasting time from the hydro root process to the whole world
-!!$    write(out,*) "Broadcasting fields to stats part."
-!!$    call flush(out)
-
-
-    ! first send it to the root process of the stats part
-    count = 1
-    tag = 0
-    if (iammaster) then
-       if (task.eq.'hydro') call MPI_SEND(TIME,count,MPI_REAL8,id_root_stats,tag,MPI_COMM_WORLD,mpi_err)
-       if (task.eq.'stats') call MPI_RECV(TIME,count,MPI_REAL8,id_root_hydro,tag,MPI_COMM_WORLD,mpi_status,mpi_err)
-!!$       write(out,*) "Exchanged information between master processors."
-!!$       call flush(out)
-    end if
-    ! then broadcast it over the "stats" communicator
-    if (task.eq.'stats') then
-       call MPI_BCAST(TIME,count,MPI_REAL8,0,MPI_COMM_TASK,mpi_err)
-       ! checking if we need to start advancing scalars
-       if (.not. int_scalars .and. TIME .gt. TSCALAR) then
-          int_scalars = .true.
-          write(out,*) "Starting to move the scalars."
-          call flush(out)
-       end if
-    end if
-!!$    write(out,*) "Broadcasted to slave processors."
-!!$    call flush(out)
-
-    ! figuring out how many scalars to broadcast:
-    ! 0     if we do not move scalars
-    ! all   if we move scalars
-    n_scalars_bcast = 0
-    if (int_scalars) n_scalars_bcast = n_scalars
-!!$    write(out,*) "Number of scalars to broadcast:", n_scalars_bcast
-!!$    call flush(out)
-
-
+! figuring out how many scalars to broadcast:
+! 0     if we do not move scalars
+! all   if we move scalars
+  n_scalars_bcast = 0
+  if (int_scalars) n_scalars_bcast = n_scalars
     if (numprocs_hydro .ge. numprocs_stats) then
-
-       ! using the code structure:
-       ! since the size of the arrays is always 2^n, there is always 2^k slabs
-       ! of a "hydro" array that correspond to q slab of the "stats" array
-
-       ratio = numprocs_hydro / numprocs_stats
+    ! using the code structure:
+    ! since the size of the arrays is always 2^n, there is always 2^k slabs
+    ! of a "hydro" array that correspond to q slab of the "stats" array
+    ratio = numprocs_hydro / numprocs_stats
 
        select case (task)
 
@@ -153,7 +125,7 @@ contains
 
     else
 
-       ! now doing the same for the case when more processors are involved in 
+       ! now doing the same for the case when more processors are involved in
        ! the "stat" part than in "hydro" part
 
        ratio = numprocs_stats / numprocs_hydro
@@ -210,7 +182,7 @@ contains
 
     use m_openmpi
     use m_parameters
-    use m_io
+!    use m_io
     use m_work
     implicit none
 
@@ -238,11 +210,10 @@ contains
     ! if have not yet started moving particles, return
     if (TIME.lt.starttime_particles) return
 
-    ! if this is the first timestep when we need to start moving particles, 
+    ! if this is the first timestep when we need to start moving particles,
     ! change the int_particle variable
     if (TIME.ge.starttime_particles .and. .not. int_particles) then
-       write(out,*) 'Starting to move particles'
-       call flush(out)
+       write(*,*) 'Starting to move particles'
        int_particles = .true.
     end if
 
@@ -310,7 +281,7 @@ contains
 
     else
 
-       ! now doing the same for the case when more processors are involved in 
+       ! now doing the same for the case when more processors are involved in
        ! the "parts" part than in "hydro" part
 
        ratio = numprocs_parts / numprocs_hydro
@@ -354,61 +325,5 @@ contains
 
 
 
-!================================================================================
-!================================================================================
-!================================================================================
-!================================================================================
-!================================================================================
-!================================================================================
-!================================================================================
-
-!!$
-!!$  subroutine check_bcast
-!!$
-!!$    use m_parameters
-!!$    use m_io
-!!$    use m_work
-!!$    implicit none
-!!$
-!!$    integer :: i,j,k,n
-!!$    real*8 :: zyu
-!!$
-!!$    ! defining the fields to be cosines (testing)
-!!$    zyu = 1.0
-!!$    if (task.eq.'hydro') then
-!!$       do n = 1,3
-!!$          do k = 1,nz
-!!$             do j = 1,ny
-!!$                do i = 1,nx
-!!$
-!!$
-!!$                   fields(i,j,k,n) = sin(dble(n*i)*dx)
-!!$
-!!$                end do
-!!$             end do
-!!$          end do
-!!$       end do
-!!$    end if
-!!$
-!!$
-!!$    call m_fields_bcast
-!!$
-!!$
-!!$    do n = 1,3
-!!$
-!!$       if (task.eq.'hydro') write(fname,"('hydro',i1,'.arr')") n
-!!$       if (task.eq.'stats') write(fname,"('stats',i1,'.arr')") n
-!!$
-!!$       tmp4(:,:,:) = fields(1:nx,:,:,n)
-!!$       call write_tmp4
-!!$    end do
-!!$
-!!$    return
-!!$  end subroutine check_bcast
-!!$
-
-
 
 end module m_fields
-
-

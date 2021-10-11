@@ -1,28 +1,25 @@
 subroutine begin_restart
-
-  use m_parameters
-  use m_particles
-  use m_fields
-  use m_timing
-  implicit none
-
-  real*8, allocatable :: zhopa(:,:,:,:)
-  integer :: i
+use m_parameters
+use m_particles
+use m_fields
+use m_timing
+implicit none
+real*8, allocatable :: zhopa(:,:,:,:)
+integer :: i
 
 
-  write(out,"(70('='))") 
-  write(out,*) '                    RESTART '
-  write(out,"(70('='))") 
-  call flush(out)
+  write(*,"(70('='))")
+  write(*,*) '                    RESTART '
+  write(*,"(70('='))")
 
   ITIME = ITMIN
-  call get_file_ext
+  write(file_ext,"(i6.6)") itime
 
   ! reading the restart file
   if (task.eq.'hydro') call restart_read_parallel
 
-  ! broadcasting the current simulation time from the restart file
-  call MPI_BCAST(time,1,MPI_REAL8,0,MPI_COMM_WORLD,mpi_err)
+! broadcasting the current simulation time from the restart file
+call MPI_BCAST(time,1,MPI_REAL8,0,MPI_COMM_WORLD,mpi_err)
 
   ! redefining the timestep.
   ! the code uses Adams-Bashforth time-stepping scheme,
@@ -30,12 +27,12 @@ subroutine begin_restart
   ! timestep is done using a simple Euler scheme (1st order in time).
   ! To help maintain any sensible accuracy, we need to start with
   ! the timestep which is smaller than the last.
-  if (variable_dt) then
-     dt = half * dt
-     call MPI_BCAST(dt,1,MPI_REAL8,0,MPI_COMM_WORLD,mpi_err)
-     write(out,*) "Making the timestep smaller: ",dt
-     call flush(out)
-  end if
+!  if (variable_dt) then
+!     dt = half * dt
+!     call MPI_BCAST(dt,1,MPI_REAL8,0,MPI_COMM_WORLD,mpi_err)
+!     write(out,*) "Making the timestep smaller: ",dt
+!     call flush(out)
+!  end if
 
 
 !!$!================================================================================
@@ -56,7 +53,7 @@ subroutine begin_restart
 !!$  stop 'checking the restart read speed'
 !!$
 !!$!================================================================================
-!!$!  Checking the accuracy of the parallel read 
+!!$!  Checking the accuracy of the parallel read
 !!$!  (reading parallel first, then serial and comparing)
 !!$!================================================================================
 !  if (task.eq.'hydro') then
@@ -79,7 +76,7 @@ subroutine begin_restart
   ! deciding whether we advance scalars or not
   if (n_scalars.gt.0  .and. time.gt.TSCALAR) then
      int_scalars = .true.
-     write(out,"('Advancing ',i3,' scalars.')") n_scalars
+     write(*,"('Advancing ',i3,' scalars.')") n_scalars
   end if
 
   if (task.eq.'parts') call particles_init

@@ -1,49 +1,26 @@
-!================================================================================
-! M_WORK - module that contains working arrays wrk1....wrk15.
-!
-! Time-stamp: <2009-08-18 13:47:59 (chumakov)>
-!================================================================================
 module m_work
+use m_parameters
+implicit none
+real*4,allocatable :: tmp4(:,:,:)
+real*8, allocatable :: wrk(:,:,:,:)
+real*8, allocatable :: wrkp(:,:)
+real*8, allocatable :: rhs_old(:,:,:,:)
 
-!  use m_openmpi
-  use m_parameters
-  use m_io
-
-
-  implicit none
-
-  ! --- work arrays
-  real*4,allocatable :: tmp4(:,:,:)
-
-  real*8, allocatable :: wrk(:,:,:,:)
-
-  real*8, allocatable :: wrkp(:,:)
-
-  real*8, allocatable :: rhs_old(:,:,:,:)
 
 contains
 
-!================================================================================
-!================================================================================
-!================================================================================
-!================================================================================
-  subroutine m_work_init
+subroutine m_work_init
+use m_parameters
+implicit none
 
-    use m_parameters
-    implicit none
+if (task.eq.'hydro')  then
 
-!!$    write(out,*) "Inside m_work_init: ",task
-!!$    call flush(out)
-
-    ! allocating work arrays
-    if (task.eq.'hydro')  then
-
-       if (les_model.ge.4) then
-          ! The dynamic structure LES model needs more wrk arrays than usual
-          call m_work_allocate(max(6,3+n_scalars+n_les+4))
-       else
-          call m_work_allocate(max(6,3+n_scalars+n_les+2))
-       end if
+!       if (les_model.ge.4) then
+!          ! The dynamic structure LES model needs more wrk arrays than usual
+!          call m_work_allocate(max(6,3+n_scalars+n_les+4))
+!       else
+      call m_work_allocate(max(6,3+n_scalars+2))
+!       end if
 
     elseif (task.eq.'stats')  then
 
@@ -56,22 +33,21 @@ contains
        select case (particles_tracking_scheme)
        case (0)
           allocate(wrk(1:nx+2,1:ny,1:3,0:0),stat=ierr)
-          write(out,*) "Allocated wrk(1:nx+2,1:ny,1:3,0:0)", ierr
+          write(*,*) "Allocated wrk(1:nx+2,1:ny,1:3,0:0)", ierr
           wrk = zip
        case (1)
           allocate(wrk(1:nx+2,1:ny,1:3,1:3),stat=ierr)
-          write(out,*) "Allocated wrk(1:nx+2,1:ny,1:3,1:3)", ierr
+          write(*,*) "Allocated wrk(1:nx+2,1:ny,1:3,1:3)", ierr
           wrk = zip
        case default
           stop 'wrong particles_tracking_scheme'
        end select
        allocate(tmp4(nx,ny,nz), stat=ierr)
-       write(out,*) "Allocated tmp4."
-       call flush(out)
+       write(*,*) "Allocated tmp4."
 
     else
-       write(out,*) 'TASK variable is set in such a way that I dont know how to allocate work arrays'
-       write(out,*) 'task = ',task
+       write(*,*) 'TASK variable is set in such a way that I dont know how to allocate work arrays'
+       write(*,*) 'task = ',task
        call my_exit(-1)
     end if
 
@@ -117,9 +93,8 @@ contains
        stop
     end if
 
-    if (allocated(wrk)) write(out,"('allocated wrk(nx+2,ny,nz,0:',i3,')')") number
-    if (allocated(rhs_old)) write(out,"('allocated rhs_old(nx+2,ny,nz,1:',i3,')')") 3+n_scalars+n_les
-    call flush(out)
+    if (allocated(wrk)) write(*,"('allocated wrk(nx+2,ny,nz,0:',i3,')')") number
+    if (allocated(rhs_old)) write(*,"('allocated rhs_old(nx+2,ny,nz,1:',i3,')')") 3+n_scalars+n_les
 
     tmp4 = 0.0
     wrk = zip
@@ -129,21 +104,19 @@ contains
     return
   end subroutine m_work_allocate
 
-!================================================================================
-!================================================================================
 
-  subroutine m_work_exit
-    implicit none
 
-!    write(out,*) 'deallocaing tmp4';  call flush(out)
-    if (allocated(tmp4)) deallocate(tmp4)   
-!    write(out,*) 'deallocaing wrk';  call flush(out)
-    if (allocated(wrk)) deallocate(wrk)   
-!    write(out,*) 'deallocaing wrkp';  call flush(out)
-    if (allocated(wrkp)) deallocate(wrkp)
-    write(out,*) 'deallocated wrk arrays';  call flush(out)
 
-    return
-  end subroutine m_work_exit
+subroutine m_work_exit
+implicit none
+
+if (allocated(tmp4)) deallocate(tmp4)
+if (allocated(wrk)) deallocate(wrk)
+if (allocated(wrkp)) deallocate(wrkp)
+write(*,*) 'deallocated wrk arrays'
+
+return
+end subroutine m_work_exit
+
 
 end module m_work

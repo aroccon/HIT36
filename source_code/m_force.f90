@@ -1,16 +1,14 @@
 module m_force
+use m_parameters, only : kfmax, famp, force_type
+integer*4 :: n_forced_nodes, n_forced_nodes_total
+! coordinated of the forced nodes
+integer, allocatable :: ifn(:), jfn(:), kfn(:), k_shell(:)
 
-  use m_parameters, only : kfmax, famp, force_type
 
-
-  integer*4 :: n_forced_nodes, n_forced_nodes_total
-
-  ! coordinated of the forced nodes
-  integer, allocatable :: ifn(:), jfn(:), kfn(:), k_shell(:)
 
 contains
 
-  subroutine m_force_init
+subroutine m_force_init
 
     use m_parameters
     use x_fftw
@@ -28,8 +26,7 @@ contains
 
     case (1)
        ! Machiels forcing (see article in PRL #79(18) p.3411)
-       write(out,*) "Forcing #1: Machiels forcing - setting up"
-       call flush(out)
+       write(*,*) "Forcing #1: Machiels forcing - setting up"
 
        ! find out how many nodes are we forcing and book them
        n_forced_nodes = 0
@@ -52,9 +49,8 @@ contains
             MPI_INTEGER4,MPI_SUM,0,MPI_COMM_TASK,mpi_err)
 
        ! writing out the # of forced nodes
-       write(out,*) 'Number of forced nodes for this process:',n_forced_nodes
-       if (myid.eq.0) write(out,*) ' total number:',n_forced_nodes_total
-       call flush(out)
+       write(*,*) 'Number of forced nodes for this process:',n_forced_nodes
+       if (myid.eq.0) write(*,*) ' total number:',n_forced_nodes_total
 
        ! allocating arrays for the coordinates of the forced nodes
        allocate(ifn(n_forced_nodes), jfn(n_forced_nodes), kfn(n_forced_nodes), &
@@ -85,9 +81,8 @@ contains
 
     case default
 
-       write(out,*) 'WRONG FORCE TYPE:',force_type
-       write(out,*) 'STOPPING'
-       call flush(out)
+       write(*,*) 'WRONG FORCE TYPE:',force_type
+       write(*,*) 'STOPPING'
        stop
 
     end select
@@ -96,26 +91,21 @@ contains
     return
   end subroutine m_force_init
 
-!================================================================================
-
-  subroutine force_velocity
-
-    ! adding forcing to the arrays wrk(:,:,:,1:3) that already contain the RHS for velocities
 
 
-    use m_openmpi
-    use m_io
-    use m_parameters
-    use m_fields
-    use m_work
-    use x_fftw
-    use m_stats
 
-    implicit none
 
-    integer :: i, j, k, n_shell, n
-
-    real*8 :: fac, fac2
+! adding forcing to the arrays wrk(:,:,:,1:3) that already contain the RHS for velocities
+subroutine force_velocity
+use m_openmpi
+use m_parameters
+use m_fields
+use m_work
+use x_fftw
+use m_stats
+implicit none
+integer :: i, j, k, n_shell, n
+real*8 :: fac, fac2
 
     select case (force_type)
 
@@ -169,12 +159,12 @@ contains
           wrk(i,j,k,1) = wrk(i,j,k,1) + fac * fields(i,j,k,1)
           wrk(i,j,k,2) = wrk(i,j,k,2) + fac * fields(i,j,k,2)
           wrk(i,j,k,3) = wrk(i,j,k,3) + fac * fields(i,j,k,3)
-          
+
        end do
-       
+
 
     case default
-       write(out,*) "WRONG FORCE_TYPE:",force_type
+       write(*,*) "WRONG FORCE_TYPE:",force_type
        stop
     end select
 

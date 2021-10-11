@@ -1,45 +1,31 @@
 subroutine rhs_scalars
+use m_openmpi
+use m_parameters
+use m_fields
+use m_work
+use x_fftw
+use m_timing
+implicit none
+integer :: i, j, k, n, n1, n2, nv, ns_lo, ns_hi
+real*8  :: rtmp1, rtmp2, wnum2, r11, r12, r21, r22, r31, r32
 
-  use m_openmpi
-  use m_io
-  use m_parameters
-  use m_fields
-  use m_work
-  use x_fftw
-  use m_timing
-  use m_les
+! If we're not advancing scalars, put the real-space velocities
+! in wrk1...3 and return
+! same is done if dealias=0, that is, we use 2/3 rule.
+! if dealias=1 (phase shifts) then this is done later in the subroutine
+! thus we do the obligatory part (tranfer velocities to X-space) and quit
+! only when we are not transporting any scalars
+if (.not.int_scalars) then
+  ! converting velocities to the real space and returning
+  wrk(:,:,:,1:3) = fields(:,:,:,1:3)
+  do n = 1,3
+    call xFFT3d(-1,n)
+  end do
+  return
+end if
 
-  implicit none
-
-  integer :: i, j, k, n, n1, n2, nv, ns_lo, ns_hi
-  real*8  :: rtmp1, rtmp2, wnum2, r11, r12, r21, r22, r31, r32
-
-  ! calculate turbulent viscosity, if any
-  if (les) call les_get_turb_visc
-
-  ! If we're not advancing scalars, put the real-space velocities 
-  ! in wrk1...3 and return
-  ! same is done if dealias=0, that is, we use 2/3 rule.
-  ! if dealias=1 (phase shifts) then this is done later in the subroutine
-
-  ! also if doing LES and n_les (the # of les-related auxilary scalars) is
-  ! greater than 0, then we need to transport these LES-related scalars,
-  ! even if n_scalars=0.
-
-  ! thus we do the obligatory part (tranfer velocities to X-space) and quit
-  ! only when we are not transporting any scalars and if there are no
-  ! LES-related scalars.
-  if (.not.int_scalars .and. n_les .eq. 0) then
-     ! converting velocities to the real space and returning
-     wrk(:,:,:,1:3) = fields(:,:,:,1:3)
-     do n = 1,3
-        call xFFT3d(-1,n)
-     end do
-     return
-  end if
-
-  ! making the RHS for all scalars zero
-  wrk(:,:,:,4:3+n_scalars+n_les) = zip
+! making the RHS for all scalars zero
+wrk(:,:,:,4:3+n_scalars) = 0.d0
 
 !--------------------------------------------------------------------------------
 !  If dealias=0, performing the 2/3 rule dealiasing on scalars
@@ -53,7 +39,7 @@ subroutine rhs_scalars
         call xFFT3d(-1,n)
      end do
 
-     ! Do each scalar one at a time.  Keep the velocities in wrk1:3 intact 
+     ! Do each scalar one at a time.  Keep the velocities in wrk1:3 intact
      ! because they are needed later.
 
      ! first we need to know which scalars do we want to transport.
@@ -65,11 +51,11 @@ subroutine rhs_scalars
      ! This is possible when n_les > 0 and int_scalars=.true.
      ! (2) Only LES extra scalars are transported
      ! This is possible if and only if (.not.int_scalars .and. n_les>0)
-     ! 
-     ! The last two cases are taken care of by prescribing ns_lo and ns_hi, the 
+     !
+     ! The last two cases are taken care of by prescribing ns_lo and ns_hi, the
      ! smallest and largest number of the scalar that needs to be transported.
 
-     ns_lo = 1; 
+     ns_lo = 1;
      ns_hi = n_scalars + n_les
      if (.not.int_scalars) ns_lo = n_scalars + 1
 
@@ -99,7 +85,7 @@ subroutine rhs_scalars
                     wrk(i+1,j,k,3+n) = zip
 
                  else
-                    ! taking the convective term, multiply it by "i" 
+                    ! taking the convective term, multiply it by "i"
                     ! (see how it's done in x_fftw.f90)
                     ! and adding the diffusion term
 
@@ -144,7 +130,7 @@ subroutine rhs_scalars
   phase_shifting_dealiasing: if (dealias.eq.1) then
 
      ! define the sin/cos factors that are used in phase shifting.
-     ! computing sines and cosines for the phase shift of dx/2,dy/2,dz/2 
+     ! computing sines and cosines for the phase shift of dx/2,dy/2,dz/2
      ! and putting them into wrk0
      do k = 1,nz
         do j = 1,ny
@@ -176,7 +162,7 @@ subroutine rhs_scalars
      end do
 
      ! now we have two vacant arrays: n_scalars+n_les+4 and n_scalars+n_les+5.  Work in them
-     n1 = n_scalars + n_les + 4 
+     n1 = n_scalars + n_les + 4
      n2 = n_scalars + n_les + 5
 
      ! do one scalar at a time
@@ -188,8 +174,8 @@ subroutine rhs_scalars
         wrk(:,:,:,n2) = wrk(:,:,:,n) * wrk(:,:,:,2)
         wrk(:,:,:,n ) = wrk(:,:,:,n) * wrk(:,:,:,3)
         ! transforming them to Fourier space
-        call xFFT3d(1,n1)  
-        call xFFT3d(1,n2)  
+        call xFFT3d(1,n1)
+        call xFFT3d(1,n2)
         call xFFT3d(1,n )
 
         ! phase shifting them back using wrk0 and adding -0.5*(ik) to the RHS for the scalar
@@ -231,7 +217,7 @@ subroutine rhs_scalars
         call xFFT3d(-1,n)
      end do
 
-     ! now do scalars one at a time since we don't have enough storage to do them 
+     ! now do scalars one at a time since we don't have enough storage to do them
      ! all at once
 
      not_phase_shifted_rhs: do n = 4, 3 + n_scalars + n_les
@@ -271,9 +257,9 @@ subroutine rhs_scalars
      end do not_phase_shifted_rhs
 
      ! ------------------------------------------------------------
-     ! Add the reaction rates to the RHS     
-     ! 
-     ! The LES-related scalars are not affected because the 
+     ! Add the reaction rates to the RHS
+     !
+     ! The LES-related scalars are not affected because the
      ! upper bound for n is 3+n_scalars, not 3+n_scalars+n_les
      ! -----------------------------------------------------------
 
@@ -372,8 +358,8 @@ subroutine rhs_scalars
               wrk(:,:,:,n) = wrk(:,:,:,n) + wrk(:,:,:,n2)
 
            else
-              write(out,*) "The scalar type has a reaction rate that is not supported yet:", scalar_type(n-3)
-              call flush(out)
+!              write(out,*) "The scalar type has a reaction rate that is not supported yet:", scalar_type(n-3)
+!              call flush(out)
               call my_exit(-1)
            end if
         end if
@@ -390,38 +376,26 @@ subroutine rhs_scalars
 
 
 
-!--------------------------------------------------------------------------------
-!  Add LES to the RHS of all the scalars
-!--------------------------------------------------------------------------------
-  les_active: if (les) then
-     call les_rhs_scalars
-  end if les_active
-
-
-  return
+return
 end subroutine rhs_scalars
 
 !================================================================================
 !================================================================================
 subroutine add_reaction(n)
+use m_openmpi
+use m_parameters
+use m_fields
+use m_work
+use x_fftw
+implicit none
+integer :: n, rtype
+real*8  :: scmean, rrate
 
-  use m_openmpi
-  use m_io
-  use m_parameters
-  use m_fields
-  use m_work
-  use x_fftw
+! reaction type
+rtype =  scalar_type(n)/100
 
-  implicit none
-
-  integer :: n, rtype
-  real*8  :: scmean, rrate
-
-  ! reaction type
-  rtype =  scalar_type(n)/100
-
-  ! raction rate 
-  rrate = reac_sc(n)
+! raction rate
+rrate = reac_sc(n)
 
   select case (rtype)
   case (1)
@@ -431,7 +405,7 @@ subroutine add_reaction(n)
 
   case (2)
 
-     ! symmetric bistable       
+     ! symmetric bistable
      wrk(:,:,:,0) = rrate * (1.d0 - wrk(:,:,:,0)**2) * wrk(:,:,:,0)
 
   case (3)
@@ -444,8 +418,8 @@ subroutine add_reaction(n)
           (wrk(:,:,:,0) - scmean)
   case default
 
-     write(out,*) "Unknown reaction rate"
-     call flush(out)
+!     write(out,*) "Unknown reaction rate"
+!     call flush(out)
 
      stop
 
@@ -464,37 +438,29 @@ end subroutine add_reaction
 !================================================================================
 
 subroutine dealias_rhs(n)
+use m_parameters
+use m_work
+use x_fftw
+implicit none
+integer :: i, j, k, n
+real*8  :: wnum2, akmax
 
-  use m_io
-  use m_parameters
-  use m_work
-  use x_fftw
+akmax = real(kmax,8)
 
-  implicit none
-
-  integer :: i, j, k, n
-  real*8  :: wnum2, akmax
-
-  akmax = real(kmax,8)
-
-  do k = 1,nz
-     do j = 1,ny
-        do i = 1,nx+1,2
-
-           if ( abs(akx(i)).gt.akmax .or. &
-                abs(aky(k)).gt.akmax .or. &
-                abs(akz(j)).gt.akmax ) then
-
-              wrk(i  ,j,k,n) = zip
-              wrk(i+1,j,k,n) = zip
-           end if
-
-        end do
-     end do
+do k = 1,nz
+  do j = 1,ny
+    do i = 1,nx+1,2
+      if ( abs(akx(i)).gt.akmax .or. &
+        abs(aky(k)).gt.akmax .or. &
+        abs(akz(j)).gt.akmax ) then
+        wrk(i,j,k,n) = 0.0d0
+        wrk(i+1,j,k,n) = 0.0d0
+      end if
+    end do
   end do
+end do
 
-  return
-
+return
 end subroutine dealias_rhs
 
 !================================================================================
@@ -502,13 +468,11 @@ end subroutine dealias_rhs
 !================================================================================
 !================================================================================
 subroutine test_rhs_scalars
-
-  use m_openmpi
-  use m_io
-  use m_parameters
-  use m_fields
-  use m_work
-  use x_fftw
+use m_openmpi
+use m_parameters
+use m_fields
+use m_work
+use x_fftw
 
   implicit none
 
@@ -561,7 +525,7 @@ subroutine test_rhs_scalars
               z = dx*real(myid*nz + k-1)
 
 
-              ! checking 
+              ! checking
               wrk(i,j,k,0) = -a*cos(2.*a*x) - cos(a*x)*(b*cos(b*y) + c*cos(c*z) + nu*a**2)
 
            end do

@@ -1,38 +1,9 @@
-!==============================================================================!
-!
-!  Fast Fourier Transform that uses FFTW3 library,
-!  pseudospectral DNS code
-!  Copyright (C) 2006 Sergei Chumakov, Natalia Vladimirova, Misha Stepanov
-!
-!  This program is free software; you can redistribute it and/or modify
-!  it under the terms of the GNU General Public License as published by
-!  the Free Software Foundation; either version 2 of the License, or
-!  (at your option) any later version.
-!
-!  This program is distributed in the hope that it will be useful,
-!  but WITHOUT ANY WARRANTY; without even the implied warranty of
-!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-!  GNU General Public License for more details.
-!
-!  You should have received a copy of the GNU General Public License
-!  along with this program; if not, write to the
-!    Free Software Foundation, Inc.,
-!    51 Franklin Street, Fifth Floor,
-!    Boston, MA 02110-1301, USA
-!
-!==============================================================================!
-
-MODULE x_fftw
-
-!==============================================================================!
-!  VARIABLES
-!==============================================================================!
-  use m_parameters
-  use m_io
-  use m_fields
-  use m_work
-  use m_timing
-  implicit none
+module x_fftw
+use m_parameters
+use m_fields
+use m_work
+use m_timing
+implicit none
 
   ! FFTW parameters that do not change
   integer(kind=8), parameter :: FFTW_ESTIMATE = 0
@@ -97,13 +68,13 @@ CONTAINS
             plan_r2c_f(nz, LBOUND(fields,4):UBOUND(fields,4)), &
             plan_c2r_f(nz, LBOUND(fields,4):UBOUND(fields,4)), &
             xy_sheet(nx, ny), buff(nx + 2, nz, nz), &
-            z_stick(2 * nz_all), akx(nx + 2), aky(nz), akz(nz_all), & 
+            z_stick(2 * nz_all), akx(nx + 2), aky(nz), akz(nz_all), &
             rezkax(nx + 2), rezkay(nz), rezkaz(nx), &
             coskx2(nx + 2), cosky2(nz), coskz2(nx), &
             sinkx2(nx + 2), sinky2(nz), sinkz2(nx), &
             order(numprocs - 1), &
             buff2(nx+2, nz, nz), &
-            ialias(nx+2, ny, nz), stat = ierr) 
+            ialias(nx+2, ny, nz), stat = ierr)
 
 
 
@@ -112,12 +83,11 @@ CONTAINS
 !!$       call flush(out)
 
        if (ierr /= 0) then
-          write (out, *) '*** X_FFTW_ALLOCATE: cannot allocate'
+          write (*, *) '*** X_FFTW_ALLOCATE: cannot allocate'
           call my_exit(-1)
        end if
 
-       write(out,*) "x_fftw_allocated."
-       call flush(out)
+       write(*,*) "x_fftw_allocated."
 
        ! assigning temporary values to allocated arrays
        plan_r2c = 0
@@ -138,21 +108,18 @@ CONTAINS
                akx, aky, akz, rezkax, rezkay, rezkaz, coskx2, cosky2, coskz2,&
                sinkx2, sinky2, sinkz2, buff2, ialias)
        end if
-       write(out,*) "x_fftw_deallocated."
-       call flush(out)
+       write(*,*) "x_fftw_deallocated."
     else
-       write (out, *) '*** X_FFTW_ALLOCATE: Wrong value of flag:', flag
+       write (*, *) '*** X_FFTW_ALLOCATE: Wrong value of flag:', flag
        call my_exit(-1)
     end if
 
     return
   end subroutine X_FFTW_ALLOCATE
 
-!==============================================================================!
-!  Program that initializes the auxilary arrays for FFT
-!==============================================================================!
 
-  subroutine x_fftw_init
+!  Program that initializes the auxilary arrays for FFT
+subroutine x_fftw_init
 
     implicit none
 
@@ -167,7 +134,7 @@ CONTAINS
 !------------------------------------------------------------------------------!
     allocate(order_matrix(numprocs, numprocs), stat = ierr)
     if (ierr /= 0) then
-       write(out,*) '***  X_FFTW_INIT: Cannot allocate order_matrix'
+       write(*,*) '***  X_FFTW_INIT: Cannot allocate order_matrix'
        call my_exit(-1)
     end if
 
@@ -190,15 +157,15 @@ CONTAINS
 
     end do
 
-!------------------------------------------------------------------------------!
-!  filling the array order and deallocating order_matrix
-!------------------------------------------------------------------------------!
+!filling the array order and deallocating order_matrix'
     do ix = 1, numprocs
        if (order_matrix(ix, myid + 1) /= 0) then
           order(order_matrix(ix, myid + 1)) = ix - 1
        end if
     end do
     deallocate(order_matrix)
+
+    write(*,*) "line 168"
 
 !------------------------------------------------------------------------------!
 !  initializing FFTW plans for the 1st step in FFT --- 2D r2c
@@ -213,6 +180,8 @@ CONTAINS
                FFTW_ESTIMATE)
        end do
     end do
+
+    write(*,*) "line 183"
 
     ! separately initializing the plans for FFT of the array "fields"
     do n = LBOUND(fields,4),UBOUND(fields,4)
@@ -234,6 +203,8 @@ CONTAINS
 !------------------------------------------------------------------------------!
     call DFFTW_PLAN_DFT_1D(plan_b_c2c, nz_all, z_stick, z_stick, &
          FFTW_BACKWARD, FFTW_ESTIMATE)
+
+         write(*,*) "line 203"
 
 !------------------------------------------------------------------------------!
 !  initializing FFTW plans for the 2nd step in IFFT --- 2D c2r
@@ -260,6 +231,8 @@ CONTAINS
 !------------------------------------------------------------------------------!
     nx21 = nx / 2 + 1
     norm = one / real(nx * ny * nz_all, 8)
+
+    write(*,*) "line 228"
 
 !------------------------------------------------------------------------------!
 !  filling up the wavenumber arrays akx, aky, akz
@@ -310,8 +283,7 @@ CONTAINS
     end do
 
 
-    write(out,*) "x_fftw arrays are intiialized."
-    call flush(out)
+    write(*,*) "x_fftw arrays are intiialized."
 
     return
   end subroutine x_fftw_init
@@ -343,7 +315,7 @@ CONTAINS
 !------------------------------------------------------------------------------!
 !  Direct FFT, step 1: 2-D real-to-complex transform
 !------------------------------------------------------------------------------!
-!  
+!
 !   R2C           (# = ny) A y          A y                 (# = ny) A k_y
 !                          |            |                            |
 !          +---+---+---+---+            +            +---+---+---+---+
@@ -436,7 +408,7 @@ CONTAINS
                & (nx + 2) * nz * nz, MPI_REAL8, &
                & order(iproc), myid * numprocs + order(iproc), &
                & order(iproc), order(iproc) * numprocs + myid, &
-               & MPI_COMM_TASK, mpi_status, mpi_err) 
+               & MPI_COMM_TASK, mpi_status, mpi_err)
 
           do iy = 1, nz
              do iz = 1, nz
@@ -465,9 +437,9 @@ CONTAINS
 !      +---+---+---+---+                              +---+---+---+---+
 !                     /                                              /
 !                    V k_x                                          V k_x
-!  
+!
 !        3   2   1   0  --- myid                        3   2   1   0  --- myid
-!  
+!
 !------------------------------------------------------------------------------!
 
 !!$          write(out,*) 'before 1d fft'
@@ -497,7 +469,7 @@ CONTAINS
 !------------------------------------------------------------------------------!
 !  Inverse FFT, step 1: one-dimensionsal complex-to-complex transform
 !------------------------------------------------------------------------------!
-!   
+!
 !   <-C2C                  A k_z                                          A z
 !                          |        A k_z    A z                          |
 !          +---+---+---+---+        |        |            +---+---+---+---+
@@ -515,7 +487,7 @@ CONTAINS
 !      +---+---+---+---+                              +---+---+---+---+
 !                     /                                              /
 !                    V k_x                                          V k_x
-!  
+!
 !        3   2   1   0  --- myid                        3   2   1   0  --- myid
 !
 !------------------------------------------------------------------------------!
@@ -579,7 +551,7 @@ CONTAINS
                & (nx + 2) * nz * nz, MPI_REAL8, &
                & order(iproc), myid * numprocs + order(iproc), &
                & order(iproc), order(iproc) * numprocs + myid, &
-               & MPI_COMM_TASK, mpi_status, mpi_err) 
+               & MPI_COMM_TASK, mpi_status, mpi_err)
           do iz = 1, nz
              do iy = 1, nz
                 wrk(:, order(iproc) * nz + iy, iz, n) = buff(:, iy, iz)
@@ -663,7 +635,7 @@ CONTAINS
           end do
        end do
     case default
-       write (out, *) '*** x_derivative: wrong value of axis: ', axis
+       write (*, *) '*** x_derivative: wrong value of axis: ', axis
        call my_exit(-1)
     end select
 
@@ -852,7 +824,6 @@ CONTAINS
   subroutine xFFT3d(flag, n)
 
     use m_openmpi
-    use m_io
     implicit none
 
     integer :: flag, n
@@ -910,7 +881,7 @@ CONTAINS
 
        do iproc = 1, numprocs - 1
 
-!!$          ! The following order  should be implemented in the future, 
+!!$          ! The following order  should be implemented in the future,
 !!$          ! because it shaves off about 4% of time
 !!$          id_to   = mod(myid+iproc,numprocs)
 !!$          id_from = mod(myid-iproc+numprocs,numprocs)
@@ -1098,7 +1069,7 @@ CONTAINS
   subroutine xFFT3d_fields(flag, n)
 
     use m_openmpi
-    use m_io
+!    use m_io
     use m_fields
     implicit none
 
@@ -1145,7 +1116,7 @@ CONTAINS
 
        do iproc = 1, numprocs - 1
 
-!!$          ! The following order  should be implemented in the future, 
+!!$          ! The following order  should be implemented in the future,
 !!$          ! because it shaves off about 4% of time
 !!$          id_to   = mod(myid+iproc,numprocs)
 !!$          id_from = mod(myid-iproc+numprocs,numprocs)

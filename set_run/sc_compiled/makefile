@@ -9,7 +9,6 @@ PROG    = hit36
 
 # Modules
 MODULES = m_openmpi.o\
-	m_io.o\
 	m_parameters.o\
 	m_work.o\
 	m_fields.o\
@@ -20,7 +19,6 @@ MODULES = m_openmpi.o\
 	m_stats.o\
 	m_force.o\
 	m_rand_knuth.o\
-	m_les.o\
 	RANDu.o
 
 # Objects
@@ -28,12 +26,10 @@ OBJ     = main.o\
 	begin_new.o\
 	begin_restart.o\
 	dealias_all.o\
-	get_file_ext.o\
 	init_velocity.o\
 	init_scalars.o\
-	io_write_4.o\
-	my_dt.o\
-	my_exit.o\
+	write_output.o\
+	last_call.o\
 	pressure.o\
 	restart_io.o\
 	rhs_velocity.o\

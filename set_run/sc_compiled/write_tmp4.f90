@@ -1,12 +1,9 @@
 subroutine write_tmp4
-
-  use m_parameters
-  use m_io
-  use m_work
-  implicit none
-
-  integer :: my_out=13, i,j,k
-  integer*4 :: sizes(3)
+use m_parameters
+use m_work
+implicit none
+integer :: my_out=13, i,j,k
+integer*4 :: sizes(3)
 
 !======================================================================
 
@@ -39,11 +36,9 @@ end subroutine write_tmp4
 
 !======================================================================
 subroutine write_tmp4_all
-
-  use m_parameters
-  use m_io
-  use m_work
-  implicit none
+use m_parameters
+use m_work
+implicit none
 
   integer :: my_out=13, i,j,k
   integer(kind=MPI_INTEGER_KIND) :: sizes(3), fh

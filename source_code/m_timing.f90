@@ -11,7 +11,7 @@ contains
   subroutine get_job_runlimit
 
     use m_openmpi
-    use m_io
+!    use m_io
     implicit none
 
     logical :: there
@@ -22,7 +22,7 @@ contains
     ! make the default job runlimit to be 12 hours
     job_runlimit = 12 * 60
 
-    write(out,*) 'job_runlimit (default):',job_runlimit
+    write(*,*) 'job_runlimit (default):',job_runlimit
 
     if(myid_world.eq.0) then
 
@@ -35,8 +35,7 @@ contains
     end if
     call MPI_BCAST(job_runlimit,1,MPI_INTEGER4,0,MPI_COMM_WORLD,mpi_err)
 
-    write(out,*) 'job_runlimit: ',job_runlimit
-    call flush(out)
+    write(*,*) 'job_runlimit: ',job_runlimit
 
     return
 
@@ -45,11 +44,12 @@ contains
 !================================================================================
 !================================================================================
 
-  subroutine m_timing_init
+subroutine m_timing_init
 
-    call system_clock(cpu0,dcpu)
-    return
-  end subroutine m_timing_init
+  call system_clock(cpu0,dcpu)
+  return
+
+end subroutine m_timing_init
 
 !================================================================================
 !================================================================================

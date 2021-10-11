@@ -31,7 +31,7 @@ contains
 !======================================================================
   subroutine filter_xfftw(n)
 
-    use m_io
+!    use m_io
     implicit none
 
     integer n
@@ -73,7 +73,7 @@ contains
 !======================================================================
   subroutine filter_xfftw_fields(n)
 
-    use m_io
+!    use m_io
     use m_fields
     implicit none
 
@@ -121,7 +121,6 @@ contains
   subroutine filter_xfftw_init
 
     use m_parameters
-    use m_io
     use m_work
     implicit none
 
@@ -139,19 +138,17 @@ contains
     if (task.eq.'hydro') delta = dx*four
 
     if (delta .lt. dx*three) then
-       write(out,*) "filter_xfftw_init: delta is too small:",delta,dx
-       write(out,*) "Must be at least 3*dx = ",three*dx
-       call flush(out)
+       write(*,*) "filter_xfftw_init: delta is too small:",delta,dx
+       write(*,*) "Must be at least 3*dx = ",three*dx
        call my_exit(-1)
     end if
 
-    write(out,"('initializing the filter, filter_size = ',2e15.6)") delta, dx
-    call flush(out)
+    write(*,"('initializing the filter, filter_size = ',2e15.6)") delta, dx
 
     ! the main idea is as follows:
     ! 1) create the filter kernel in one of the fields array
     ! 2) transform it into the Fourier space
-    ! 3) put it into the array filter_g 
+    ! 3) put it into the array filter_g
 
     ! number of the slice in the fields array that will be used
     m = LBOUND(fields,4)
@@ -166,10 +163,10 @@ contains
 !  tophat filter
 !-------------------------------------------------------------------
     case (1)
-       write(out,*) '-- tophat filter, delta =',delta
+       write(*,*) '-- tophat filter, delta =',delta
 
-       write(out,*) "Tophat filter is not working at the moment."
-       write(out,*) "We're sorry for the inconvenience, stopping."
+       write(*,*) "Tophat filter is not working at the moment."
+       write(*,*) "We're sorry for the inconvenience, stopping."
        call my_exit(-1)
 
        fields(:,:,:,m) = zip
@@ -195,8 +192,7 @@ contains
 !  Gaussian filter
 !-------------------------------------------------------------------
     case (2)
-       write(out,*) '-- Gaussian filter, delta =',delta
-       call flush(out)
+       write(*,*) '-- Gaussian filter, delta =',delta
 
        fields(:,:,:,m) = zip
 
@@ -223,7 +219,7 @@ contains
 !  linear filter
 !-------------------------------------------------------------------
     case(3)
-       write(out,*) '-- linear filter, delta =',delta
+       write(*,*) '-- linear filter, delta =',delta
 !       if(myid.eq.0) print*,'-- linear filter, delta =',delta
        const1 = 24.0d0 / (PI*delta**3)  *dx**3
        const2 = delta**2 / 4.0d0
@@ -254,7 +250,7 @@ contains
     ! It should equal 1.0.
     const1 = sum(fields(1:nx,1:ny,1:nz,m))
     call MPI_REDUCE(const1,const2,1,MPI_REAL8,MPI_SUM,0,MPI_COMM_TASK,mpi_err)
-    if(myid.eq.0) write(out,*) '-- NORM OF G: ',const2
+    if(myid.eq.0) write(*,*) '-- NORM OF G: ',const2
 
     ! compute FFT of g
     call xFFT3d_fields(1,m)
@@ -265,8 +261,7 @@ contains
        allocate(filter_g(nx+2,ny,nz), stat=ierr)
        if (ierr /= 0) stop 'cannot allocate filter_g'
        filter_g = zip
-       write(out,*) 'allocated filter_g'
-       call flush(out)
+       write(*,*) 'allocated filter_g'
     end if
     filter_g(:,:,:) = fields(:,:,:,m)
 

@@ -1,49 +1,34 @@
-!================================================================================
 !  Subroutine that rescales the current velocities.  The rescales velocity
 !  will have the spectrum that is defined in the input file via parameters
 !  isp_type (spectrum type) and peak_wavenum (peak wavenumber).
-!
-!  The program is copies from a part of init_velocity.f90.  Some time in the
-!  future we should make it one routine that is called in init_velocity.
-!   
-!  Time-stamp: <2010-01-25 17:01:55 (chumakov)>
-!================================================================================
-
 subroutine velocity_rescale
-
-  use m_openmpi
-  use m_parameters
-  use m_io
-  use m_fields
-  use x_fftw
-
-  implicit none
-
-  integer :: i, j, k, n
-
-  real,       allocatable   :: rr(:)
-  real*8,     allocatable :: e_spec(:), e_spec1(:)
-  integer *8, allocatable :: hits(:), hits1(:)
-
-  integer   :: n_shell
-  real*8    :: sc_rad1, sc_rad2
-
-  real*8 :: wmag, wmag2, ratio, fac
+use m_openmpi
+use m_parameters
+use m_fields
+use x_fftw
+implicit none
+integer :: i, j, k, n
+real,       allocatable   :: rr(:)
+real*8,     allocatable :: e_spec(:), e_spec1(:)
+integer *8, allocatable :: hits(:), hits1(:)
+integer   :: n_shell
+real*8    :: sc_rad1, sc_rad2
+real*8 :: wmag, wmag2, ratio, fac
 
 
-  ! if Taylor-Green, return
-  if (isp_type.eq.-1) return
+! if Taylor-Green, return
+if (isp_type.eq.-1) return
 
 
 !================================================================================
   allocate( e_spec(kmax), e_spec1(kmax), rr(nx+2), hits(kmax), hits1(kmax), stat=ierr)
   if (ierr.ne.0) stop "cannot allocate the init_velocity arrays"
 
-  write(out,*) 'Rescaling the velocities'
-  call flush(out)
+!  write(out,*) 'Rescaling the velocities'
+!  call flush(out)
 
 !-------------------------------------------------------------------------------
-!     Making the spectrum to be what is prescribed in the input file <...>.in 
+!     Making the spectrum to be what is prescribed in the input file <...>.in
 !-------------------------------------------------------------------------------
 
   ! --- first get the energy spectrum (copied from m_stat.f90)
@@ -122,8 +107,8 @@ subroutine velocity_rescale
         e_spec1(k) = fac**4 / (one + fac**2)**3
 
      else
-        write(out,*) "ERROR: WRONG INITIAL SPECTRUM TYPE: ",isp_type
-        call flush(out)
+!        write(out,*) "ERROR: WRONG INITIAL SPECTRUM TYPE: ",isp_type
+!        call flush(out)
         stop
 
      end if
@@ -149,8 +134,8 @@ subroutine velocity_rescale
      end do
   end do
 
-  write(out,*) "Rescaled the velocities."
-  call flush(out)
+!  write(out,*) "Rescaled the velocities."
+!  call flush(out)
 
   ! deallocate work arrays
   deallocate(e_spec, e_spec1, rr, hits, hits1, stat=ierr)

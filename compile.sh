@@ -1,3 +1,4 @@
+machine="0"
 #echo ""
 #echo "=============================================================================="
 #echo "=                                 Running on                                 ="
@@ -14,7 +15,6 @@ SIM_NAME="nameofthesim"
 SPLIT="0" #fluid and particles split, to be removed from command line
 # define machine
 # 0 : local (Mac)
-machine="0"
 cd set_run
 #create the folder (if missing)
 mkdir -p sc_compiled
@@ -37,4 +37,7 @@ make
 rm *.o
 
 #running the code
-./hit36 $SIM_NAME $SPLIT
+mpirun -np 4 ./hit36 $SIM_NAME $SPLIT
+
+#!  make sure DT is appropriate for scalars
+#!  DT < 0.09 * dx^2*Pe
