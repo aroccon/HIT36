@@ -56,7 +56,7 @@ wrk(:,:,:,4:3+n_scalars) = 0.d0
      ! smallest and largest number of the scalar that needs to be transported.
 
      ns_lo = 1;
-     ns_hi = n_scalars + n_les
+     ns_hi = n_scalars
      if (.not.int_scalars) ns_lo = n_scalars + 1
 
      do n = ns_lo, ns_hi
@@ -147,7 +147,7 @@ wrk(:,:,:,4:3+n_scalars) = 0.d0
      ! primary work arrays here.
 
      ! First, get phase shifted velocities and scalars
-     do n = 1, 3 + n_scalars + n_les
+     do n = 1, 3 + n_scalars
         ! phase-shifting the quantity
         do k = 1,nz
            do j = 1,ny
@@ -162,11 +162,11 @@ wrk(:,:,:,4:3+n_scalars) = 0.d0
      end do
 
      ! now we have two vacant arrays: n_scalars+n_les+4 and n_scalars+n_les+5.  Work in them
-     n1 = n_scalars + n_les + 4
-     n2 = n_scalars + n_les + 5
+     n1 = n_scalars + 4
+     n2 = n_scalars + 5
 
      ! do one scalar at a time
-     phase_shifted_rhs: do n = 4, 3 + n_scalars + n_les
+     phase_shifted_rhs: do n = 4, 3 + n_scalars
 
         ! getting all three products of phase-shifted scalar and phase-shifted velocities
         ! using three work arrays: n, n1 and n2
@@ -220,7 +220,7 @@ wrk(:,:,:,4:3+n_scalars) = 0.d0
      ! now do scalars one at a time since we don't have enough storage to do them
      ! all at once
 
-     not_phase_shifted_rhs: do n = 4, 3 + n_scalars + n_les
+     not_phase_shifted_rhs: do n = 4, 3 + n_scalars
 
         ! get the scalar into the real space and put it in the wrk(0)
         wrk(:,:,:,0) = fields(:,:,:,n)

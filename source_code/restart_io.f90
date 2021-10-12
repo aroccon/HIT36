@@ -34,21 +34,21 @@ fname = run_name//'.64.'//file_ext
 
   ! the master node writes the header with parameters
   if (myid.eq.0) then
-     nx1 = nx;  ny1 = ny;  nz1 = nz_all;  nles1 = n_les;  nums1 = nums_out;
+     nx1 = nx;  ny1 = ny;  nz1 = nz_all;  nums1 = nums_out;
      count = 1
      ST = zip
      call MPI_FILE_WRITE(fh,   nx1, count, MPI_INTEGER4, mpi_status, mpi_err)
      call MPI_FILE_WRITE(fh,   ny1, count, MPI_INTEGER4, mpi_status, mpi_err)
      call MPI_FILE_WRITE(fh,   nz1, count, MPI_INTEGER4, mpi_status, mpi_err)
      call MPI_FILE_WRITE(fh, nums1, count, MPI_INTEGER4, mpi_status, mpi_err)
-     call MPI_FILE_WRITE(fh, nles1, count, MPI_INTEGER4, mpi_status, mpi_err)
+!     call MPI_FILE_WRITE(fh, nles1, count, MPI_INTEGER4, mpi_status, mpi_err)
      call MPI_FILE_WRITE(fh,  TIME, count, MPI_REAL8, mpi_status, mpi_err)
      call MPI_FILE_WRITE(fh,    DT, count, MPI_REAL8, mpi_status, mpi_err)
   end if
 
   ! all nodes write their stuff into the file
   ! first writing the velocities and passive scalars
-  writing_fields: do n = 1, 3 + nums_out + n_les
+  writing_fields: do n = 1, 3 + nums_out
 
      offset = 36 + (n-1)*nx*ny*nz_all*8 + myid*nx*ny*nz*8
      count = nx * ny * nz
@@ -69,13 +69,6 @@ fname = run_name//'.64.'//file_ext
   call MPI_INFO_FREE(mpi_info, mpi_err)
   deallocate(sctmp8)
 
-  !write(out,*) '------------------------------------------------'
-  !write(out,*) 'Restart file written (par): '//trim(fname)
-  !write(out,"(' Velocities and ',i3,' passive scalars')") nums_out
-  !if (n_les>0) write(out,"(' Also wrote',i3,' LES scalars)')") n_les
-  !write(out,"(' Restart file time = ',f15.10,i7)") time, itime
-  !write(out,*) '------------------------------------------------'
-  !call flush(out)
 
   last_dump = ITIME
 
@@ -142,14 +135,7 @@ integer      :: i, j, k, n, n_skip
      call my_exit(-1)
   end if
 
-  ! checking if the number of LES quantities is the same in .in and restart files
-  if (n_les .ne. nles1) then
-!     write(out,*) '*** WARNING : Different values of n_les:'
-!     write(out,*) '***     .in file: ',n_les
-!     write(out,*) '*** restart file: ',nles1
-!     write(out,*) '*** Make sure you are running the same simulation.'
-!     call flush(out)
-  end if
+
 
 !-----------------------------------------------------------------------
 !     dealing with scalars.
@@ -221,23 +207,6 @@ integer      :: i, j, k, n, n_skip
      fields(1:nx,1:ny,1:nz,n) = sctmp8(1:nx,1:ny,1:nz)
   end do reading_fields
 
-  ! now reading the LES variables.  They are stored after the fields
-  ! u,v,w,sc(1...nums1), so we are applying the offset based on the
-  ! number of scalars in the restart file.
-  reading_les_fields: do n = 1, n_les
-
-  !   write(out,"('Reading LES variable # ',i3)") n
-  !   call flush(out)
-
-     n_skip = 3 + nums1
-     offset = 36 + (n_skip+n-1)*nx*ny*nz_all*8 + myid*nx*ny*nz*8
-
-
-     count = nx * ny * nz
-!     call MPI_FILE_READ_AT(fh, offset, sctmp8, count, MPI_REAL8, mpi_status, mpi_err)
-     call MPI_FILE_READ_AT_ALL(fh, offset, sctmp8, count, MPI_REAL8, mpi_status, mpi_err)
-     fields(1:nx,1:ny,1:nz,3+n_scalars+n) = sctmp8(1:nx,1:ny,1:nz)
-  end do reading_les_fields
 
   call MPI_FILE_CLOSE(fh, mpi_err)
   call MPI_INFO_FREE(mpi_info, mpi_err)

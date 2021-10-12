@@ -4,289 +4,219 @@ use m_fields
 use m_work
 use m_timing
 implicit none
+! FFTW parameters that do not change
+integer(kind=8), parameter :: FFTW_ESTIMATE = 0
+integer(kind=8), parameter :: FFTW_FORWARD = -1
+integer(kind=8), parameter :: FFTW_BACKWARD = 1
+! dedicated arrays for parallel FFT
+real(kind=8), allocatable :: xy_sheet(:, :), buff(:, :, :), z_stick(:)
+real*8, allocatable :: buff2(:,:,:)
+! order of message passing between processors
+integer(kind=4), allocatable :: order(:), order_matrix(:, :)
+! the arrays to store FFTW plans for the 2D r2c or c2r steps
+! plan_r2c(1..nz, 1..n_scalars)
+integer(kind=8), allocatable :: plan_r2c(:, :), plan_c2r(:, :)
+integer(kind=8), allocatable :: plan_r2c_f(:, :), plan_c2r_f(:, :)
+! FFTW plans for the 1D c2c forward/backward steps
+integer(kind=8) :: plan_f_c2c, plan_b_c2c
+! k-vectors ("a" added as arrays are real
+real(kind=8), allocatable :: akx(:), aky(:), akz(:)
+real(kind=8), allocatable :: coskx2(:), cosky2(:), coskz2(:)
+real(kind=8), allocatable :: sinkx2(:), sinky2(:), sinkz2(:)
+integer(kind=4), allocatable :: rezkax(:), rezkay(:), rezkaz(:)
+! auxiliary parameters
+integer(kind=4) :: nx21
+real(kind=8)    :: norm
+! array that contains indicator of aliasing when products are taken
+integer(kind=1), allocatable :: ialias(:,:,:)
 
-  ! FFTW parameters that do not change
-  integer(kind=8), parameter :: FFTW_ESTIMATE = 0
-  integer(kind=8), parameter :: FFTW_FORWARD = -1
-  integer(kind=8), parameter :: FFTW_BACKWARD = 1
+contains
 
-  ! dedicated arrays for parallel FFT
-  real(kind=8), allocatable :: xy_sheet(:, :), buff(:, :, :), z_stick(:)
-
-  real*8, allocatable :: buff2(:,:,:)
-
-  ! order of message passing between processors
-  integer(kind=4), allocatable :: order(:), order_matrix(:, :)
-
-  ! the arrays to store FFTW plans for the 2D r2c or c2r steps
-  ! plan_r2c(1..nz, 1..n_scalars)
-  integer(kind=8), allocatable :: plan_r2c(:, :), plan_c2r(:, :)
-  integer(kind=8), allocatable :: plan_r2c_f(:, :), plan_c2r_f(:, :)
-
-  ! FFTW plans for the 1D c2c forward/backward steps
-  integer(kind=8) :: plan_f_c2c, plan_b_c2c
-
-  ! k-vectors ("a" added as arrays are real
-  real(kind=8), allocatable :: akx(:), aky(:), akz(:)
-  real(kind=8), allocatable :: coskx2(:), cosky2(:), coskz2(:)
-  real(kind=8), allocatable :: sinkx2(:), sinky2(:), sinkz2(:)
-  integer(kind=4), allocatable :: rezkax(:), rezkay(:), rezkaz(:)
-
-  ! auxiliary parameters
-  integer(kind=4) :: nx21
-  real(kind=8)    :: norm
-
-  ! array that contains indicator of aliasing when products are taken
-  integer(kind=1), allocatable :: ialias(:,:,:)
-
-!==============================================================================!
-!==============================================================================!
-CONTAINS
-!==============================================================================!
-!==============================================================================!
-!  SUBROUTINES
-!==============================================================================!
-!==============================================================================!
 !  Subroutine that allocates/deallocates the FFTW arrays
-!==============================================================================!
-  subroutine X_FFTW_ALLOCATE(flag)
+subroutine X_FFTW_ALLOCATE(flag)
+implicit none
+integer :: flag
 
-    implicit none
-    integer :: flag
+if (flag == 1) then
+  allocate(&
+  plan_r2c(nz, LBOUND(wrk,4):UBOUND(wrk,4)), &
+  plan_c2r(nz, LBOUND(wrk,4):UBOUND(wrk,4)), &
+  plan_r2c_f(nz, LBOUND(fields,4):UBOUND(fields,4)), &
+  plan_c2r_f(nz, LBOUND(fields,4):UBOUND(fields,4)), &
+  xy_sheet(nx, ny), buff(nx + 2, nz, nz), &
+  z_stick(2 * nz_all), akx(nx + 2), aky(nz), akz(nz_all), &
+  rezkax(nx + 2), rezkay(nz), rezkaz(nx), &
+  coskx2(nx + 2), cosky2(nz), coskz2(nx), &
+  sinkx2(nx + 2), sinky2(nz), sinkz2(nx), &
+  order(numprocs - 1), &
+  buff2(nx+2, nz, nz), &
+  ialias(nx+2, ny, nz), stat = ierr)
 
-    if (flag == 1) then
+  if (ierr /= 0) then
+  !  write (*, *) '*** X_FFTW_ALLOCATE: cannot allocate'
+    call my_exit(-1)
+  end if
+  !write(*,*) "x_fftw_allocated."
+  ! assigning temporary values to allocated arrays
+  plan_r2c = 0
+  plan_c2r = 0
+  xy_sheet = zip
+  buff = zip
+  buff2 = zip
+  z_stick = zip
+  order = 0
+  ialias = 0
 
-!!$       print *,'FFTW_ALLOCATE: size(wrk,4) = ',size(wrk,4)
-!!$       print *,'FFTW_ALLOCATE: bounds(wrk,4) = ',LBOUND(wrk,4),UBOUND(wrk,4)
-!!$       write(out,*) 'FFTW_ALLOCATE: size(wrk,4) = ',size(wrk,4)
-!!$       write(out,*) 'FFTW_ALLOCATE: bounds(wrk,4) = ',LBOUND(wrk,4),UBOUND(wrk,4)
-!!$       call flush(out)
-
-       allocate(&
-            plan_r2c(nz, LBOUND(wrk,4):UBOUND(wrk,4)), &
-            plan_c2r(nz, LBOUND(wrk,4):UBOUND(wrk,4)), &
-            plan_r2c_f(nz, LBOUND(fields,4):UBOUND(fields,4)), &
-            plan_c2r_f(nz, LBOUND(fields,4):UBOUND(fields,4)), &
-            xy_sheet(nx, ny), buff(nx + 2, nz, nz), &
-            z_stick(2 * nz_all), akx(nx + 2), aky(nz), akz(nz_all), &
-            rezkax(nx + 2), rezkay(nz), rezkaz(nx), &
-            coskx2(nx + 2), cosky2(nz), coskz2(nx), &
-            sinkx2(nx + 2), sinky2(nz), sinkz2(nx), &
-            order(numprocs - 1), &
-            buff2(nx+2, nz, nz), &
-            ialias(nx+2, ny, nz), stat = ierr)
-
-
-
-!!$       write(out,*) 'Size of plan_r2c:',SIZE(plan_r2c,1),SIZE(plan_r2c,2)
-!!$       write(out,*) 'Size of plan_c2r:',SIZE(plan_c2r,1),SIZE(plan_c2r,2)
-!!$       call flush(out)
-
-       if (ierr /= 0) then
-          write (*, *) '*** X_FFTW_ALLOCATE: cannot allocate'
-          call my_exit(-1)
-       end if
-
-       write(*,*) "x_fftw_allocated."
-
-       ! assigning temporary values to allocated arrays
-       plan_r2c = 0
-       plan_c2r = 0
-       xy_sheet = zip
-       buff = zip
-       buff2 = zip
-       z_stick = zip
-       order = 0
-       ialias = 0
-
-
-
-    elseif (flag == -1) then
-       if (allocated(plan_r2c)) then
-          deallocate(plan_r2c, plan_c2r, plan_r2c_f, plan_c2r_f, &
+  elseif (flag == -1) then
+    if (allocated(plan_r2c)) then
+      deallocate(plan_r2c, plan_c2r, plan_r2c_f, plan_c2r_f, &
                xy_sheet, buff, z_stick, order, &
                akx, aky, akz, rezkax, rezkay, rezkaz, coskx2, cosky2, coskz2,&
                sinkx2, sinky2, sinkz2, buff2, ialias)
-       end if
-       write(*,*) "x_fftw_deallocated."
-    else
-       write (*, *) '*** X_FFTW_ALLOCATE: Wrong value of flag:', flag
-       call my_exit(-1)
     end if
+    !write(*,*) "x_fftw_deallocated."
+  else
+    !     write (*, *) '*** X_FFTW_ALLOCATE: Wrong value of flag:', flag
+    call my_exit(-1)
+  end if
 
-    return
-  end subroutine X_FFTW_ALLOCATE
+return
+end subroutine X_FFTW_ALLOCATE
+
+
+
+
 
 
 !  Program that initializes the auxilary arrays for FFT
 subroutine x_fftw_init
-
-    implicit none
-
-    integer :: itmp, ix, iy, iz, n, i, j, k
-    real *8 :: rnx3
-
-    ! write(out, *) 'Initializing FFT arrays.'
-    ! call flush(out)
-
-!------------------------------------------------------------------------------!
+implicit none
+integer :: itmp, ix, iy, iz, n, i, j, k
+real *8 :: rnx3
 !  filling up the array order_matrix
-!------------------------------------------------------------------------------!
-    allocate(order_matrix(numprocs, numprocs), stat = ierr)
-    if (ierr /= 0) then
-       write(*,*) '***  X_FFTW_INIT: Cannot allocate order_matrix'
-       call my_exit(-1)
-    end if
+allocate(order_matrix(numprocs, numprocs), stat = ierr)
+if (ierr /= 0) then
+  write(*,*) '***  X_FFTW_INIT: Cannot allocate order_matrix'
+  call my_exit(-1)
+end if
 
-    order_matrix(1, 1) = 0
-    itmp = 1
+order_matrix(1, 1) = 0
+itmp = 1
 
-    do while (itmp < numprocs)
-
-       do ix = 1, itmp
-          do iy = 1, itmp
-
-             order_matrix(ix + itmp, iy) = order_matrix(ix, iy) + itmp
-             order_matrix(ix, iy + itmp) = order_matrix(ix, iy) + itmp
-             order_matrix(ix + itmp, iy + itmp) = order_matrix(ix, iy)
-
-          end do
-       end do
-
-       itmp = 2 * itmp
-
+do while (itmp < numprocs)
+  do ix = 1, itmp
+    do iy = 1, itmp
+      order_matrix(ix + itmp, iy) = order_matrix(ix, iy) + itmp
+      order_matrix(ix, iy + itmp) = order_matrix(ix, iy) + itmp
+      order_matrix(ix + itmp, iy + itmp) = order_matrix(ix, iy)
     end do
+  end do
+  itmp = 2 * itmp
+end do
 
 !filling the array order and deallocating order_matrix'
-    do ix = 1, numprocs
-       if (order_matrix(ix, myid + 1) /= 0) then
-          order(order_matrix(ix, myid + 1)) = ix - 1
-       end if
-    end do
-    deallocate(order_matrix)
+do ix = 1, numprocs
+  if (order_matrix(ix, myid + 1) /= 0) then
+    order(order_matrix(ix, myid + 1)) = ix - 1
+  end if
+end do
 
-    write(*,*) "line 168"
+deallocate(order_matrix)
 
-!------------------------------------------------------------------------------!
 !  initializing FFTW plans for the 1st step in FFT --- 2D r2c
-!------------------------------------------------------------------------------!
-!!$    print *,'FFTW_INIT: size(wrk,4) = ',size(wrk,4)
-!!$    print *,'FFTW_INIT: bounds(wrk,4) = ',LBOUND(wrk,4),UBOUND(wrk,4)
+do n = LBOUND(wrk,4),UBOUND(wrk,4)
+  do iz = 1, nz
+    call DFFTW_PLAN_DFT_R2C_2D(plan_r2c(iz, n), nx, ny, &
+    xy_sheet, wrk(1, 1, iz, n),FFTW_ESTIMATE)
+  end do
+end do
 
-    do n = LBOUND(wrk,4),UBOUND(wrk,4)
-       do iz = 1, nz
-          call DFFTW_PLAN_DFT_R2C_2D(plan_r2c(iz, n), nx, ny, &
-               xy_sheet, wrk(1, 1, iz, n), &
-               FFTW_ESTIMATE)
-       end do
-    end do
+! separately initializing the plans for FFT of the array "fields"
+do n = LBOUND(fields,4),UBOUND(fields,4)
+  do iz = 1, nz
+    call DFFTW_PLAN_DFT_R2C_2D(plan_r2c_f(iz, n), nx, ny, &
+    xy_sheet, fields(1, 1, iz, n), FFTW_ESTIMATE)
+  end do
+end do
 
-    write(*,*) "line 183"
-
-    ! separately initializing the plans for FFT of the array "fields"
-    do n = LBOUND(fields,4),UBOUND(fields,4)
-       do iz = 1, nz
-          call DFFTW_PLAN_DFT_R2C_2D(plan_r2c_f(iz, n), nx, ny, &
-               xy_sheet, fields(1, 1, iz, n), &
-               FFTW_ESTIMATE)
-       end do
-    end do
-
-!------------------------------------------------------------------------------!
 !  initializing FFTW plan for the 2nd step in FFT --- 1D c2c
-!------------------------------------------------------------------------------!
-    call DFFTW_PLAN_DFT_1D(plan_f_c2c, nz_all, z_stick, z_stick, &
+call DFFTW_PLAN_DFT_1D(plan_f_c2c, nz_all, z_stick, z_stick, &
          FFTW_FORWARD, FFTW_ESTIMATE)
 
-!------------------------------------------------------------------------------!
 !  initializing FFTW plan for the 1st step in IFFT --- 1D c2c
-!------------------------------------------------------------------------------!
-    call DFFTW_PLAN_DFT_1D(plan_b_c2c, nz_all, z_stick, z_stick, &
+call DFFTW_PLAN_DFT_1D(plan_b_c2c, nz_all, z_stick, z_stick, &
          FFTW_BACKWARD, FFTW_ESTIMATE)
 
-         write(*,*) "line 203"
 
-!------------------------------------------------------------------------------!
 !  initializing FFTW plans for the 2nd step in IFFT --- 2D c2r
-!------------------------------------------------------------------------------!
-    do n = LBOUND(wrk,4),UBOUND(wrk,4)
-       do iz = 1, nz
-          call DFFTW_PLAN_DFT_C2R_2D(plan_c2r(iz, n), nx, ny, &
-               wrk(1, 1, iz, n), xy_sheet, &
-               FFTW_ESTIMATE)
+do n = LBOUND(wrk,4),UBOUND(wrk,4)
+  do iz = 1, nz
+    call DFFTW_PLAN_DFT_C2R_2D(plan_c2r(iz, n), nx, ny, &
+    wrk(1, 1, iz, n), xy_sheet,FFTW_ESTIMATE)
        end do
     end do
 
-    ! separately intializing the plans for FFT of the array "fields"
-    do n = LBOUND(fields,4),UBOUND(fields,4)
-       do iz = 1, nz
-          call DFFTW_PLAN_DFT_C2R_2D(plan_c2r_f(iz, n), nx, ny, &
-               fields(1, 1, iz, n), xy_sheet, &
-               FFTW_ESTIMATE)
-       end do
-    end do
+! separately intializing the plans for FFT of the array "fields"
+do n = LBOUND(fields,4),UBOUND(fields,4)
+  do iz = 1, nz
+    call DFFTW_PLAN_DFT_C2R_2D(plan_c2r_f(iz, n), nx, ny, &
+    fields(1, 1, iz, n), xy_sheet,FFTW_ESTIMATE)
+  end do
+end do
 
-!------------------------------------------------------------------------------!
 !  initializing some useful constants
-!------------------------------------------------------------------------------!
-    nx21 = nx / 2 + 1
-    norm = one / real(nx * ny * nz_all, 8)
+nx21 = nx / 2 + 1
+norm = one / real(nx * ny * nz_all, 8)
 
-    write(*,*) "line 228"
-
-!------------------------------------------------------------------------------!
 !  filling up the wavenumber arrays akx, aky, akz
 !  filling up the wavenumber arrays rezkax, rezkay, rezkaz
-!------------------------------------------------------------------------------!
-    ! in Fourier space it is (nx / 2 + 1) complex numbers along kx-axis
-    do ix = 1, nx + 1, 2
-       akx(ix) = real((ix - 1) / 2, 8)
-       akx(ix + 1) = akx(ix)
-       coskx2(ix) = dcos(half * akx(ix))
-       sinkx2(ix) = dsin(half * akx(ix))
-       coskx2(ix + 1) = coskx2(ix)
-       sinkx2(ix + 1) = sinkx2(ix)
-       rezkax(ix) = 0
-       if (dabs(akx(ix)) > (real(nz_all, 8)) / 3.0D0) rezkax(ix) = 1
-    end do
+! in Fourier space it is (nx / 2 + 1) complex numbers along kx-axis
+do ix = 1, nx + 1, 2
+  akx(ix) = real((ix - 1) / 2, 8)
+  akx(ix + 1) = akx(ix)
+  coskx2(ix) = dcos(half * akx(ix))
+  sinkx2(ix) = dsin(half * akx(ix))
+  coskx2(ix + 1) = coskx2(ix)
+  sinkx2(ix + 1) = sinkx2(ix)
+  rezkax(ix) = 0
+  if (dabs(akx(ix)) > (real(nz_all, 8)) / 3.0D0) rezkax(ix) = 1
+end do
     ! in Fourier space ky-axis is distributed among the processors
-    do iy = 1, nz
-       aky(iy) = real(myid * nz + iy - 1, 8)
-       if (aky(iy) > (0.5D0 * real(ny, 8))) aky(iy) = aky(iy) - real(ny, 8)
-       cosky2(iy) = dcos(half * aky(iy))
-       sinky2(iy) = dsin(half * aky(iy))
-       rezkay(iy) = 0
-       if (dabs(aky(iy)) > (real(ny, 8)) / 3.0D0) rezkay(iy) = 1
+do iy = 1, nz
+  aky(iy) = real(myid * nz + iy - 1, 8)
+  if (aky(iy) > (0.5D0 * real(ny, 8))) aky(iy) = aky(iy) - real(ny, 8)
+  cosky2(iy) = dcos(half * aky(iy))
+  sinky2(iy) = dsin(half * aky(iy))
+  rezkay(iy) = 0
+  if (dabs(aky(iy)) > (real(ny, 8)) / 3.0D0) rezkay(iy) = 1
+end do
+! in Fourier space the z wavenumbers are aligned along the second index
+do iz = 1, ny
+  akz(iz) = real(iz - 1, 8)
+  if (akz(iz) > (0.5D0 * real(nz_all, 8))) akz(iz) = akz(iz) - real(nz_all, 8)
+  coskz2(iz) = dcos(half * akz(iz))
+  sinkz2(iz) = dsin(half * akz(iz))
+  rezkaz(iz) = 0
+  if (dabs(akz(iz)) > (real(nz_all, 8)) / 3.0D0) rezkaz(iz) = 1
+end do
+
+! Definition of the array ialias.
+! The array ialias is just the number of wavenumbers at (i,j,k) that have
+! their magnitude higher than nx/3.  This is needed in dealiasing procedures.
+rnx3 = real(nx/3, 8)
+do k = 1,nz
+  if (abs(aky(k)) .gt. rnx3) ialias(:,:,k) = 1
+  do j = 1,ny
+    if (abs(akz(j)) .gt. rnx3) ialias(:,j,k) = ialias(:,j,k) + 1
+    do i = 1,nx+2
+      if (abs(akx(i)) .gt. rnx3) ialias(i,j,k) = ialias(i,j,k) + 1
     end do
-    ! in Fourier space the z wavenumbers are aligned along the second index
-    do iz = 1, ny
-       akz(iz) = real(iz - 1, 8)
-       if (akz(iz) > (0.5D0 * real(nz_all, 8))) akz(iz) = akz(iz) - real(nz_all, 8)
-       coskz2(iz) = dcos(half * akz(iz))
-       sinkz2(iz) = dsin(half * akz(iz))
-       rezkaz(iz) = 0
-       if (dabs(akz(iz)) > (real(nz_all, 8)) / 3.0D0) rezkaz(iz) = 1
-    end do
-
-    ! Definition of the array ialias.
-    ! The array ialias is just the number of wavenumbers at (i,j,k) that have
-    ! their magnitude higher than nx/3.  This is needed in dealiasing procedures.
-    rnx3 = real(nx/3, 8)
-    do k = 1,nz
-       if (abs(aky(k)) .gt. rnx3) ialias(:,:,k) = 1
-       do j = 1,ny
-          if (abs(akz(j)) .gt. rnx3) ialias(:,j,k) = ialias(:,j,k) + 1
-          do i = 1,nx+2
-             if (abs(akx(i)) .gt. rnx3) ialias(i,j,k) = ialias(i,j,k) + 1
-          end do
-       end do
-    end do
+  end do
+end do
 
 
-    write(*,*) "x_fftw arrays are intiialized."
-
-    return
-  end subroutine x_fftw_init
+return
+end subroutine x_fftw_init
 
 
 !==============================================================================!

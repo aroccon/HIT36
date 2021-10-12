@@ -6,7 +6,6 @@ include 'mpif.h'
 ! With other MPI implementations, this parameter has to be defined manually.
 !  integer MPI_INTEGER_KIND
 !  parameter (MPI_INTEGER_KIND = 4)
-! --- MPI variables
 logical :: iammaster
 integer(kind=MPI_INTEGER_KIND) :: myid_world, numprocs_world
 integer(kind=MPI_INTEGER_KIND) :: numprocs_hydro, numprocs_stats, numprocs_parts
@@ -38,10 +37,18 @@ integer (kind=mpi_INTEGER_KIND) :: n
 integer*4 :: np_local
 integer :: i
 
+
 ! initializing MPI
 call mpi_init(mpi_err)
 call mpi_comm_size(MPI_COMM_WORLD,numprocs_world,mpi_err)
 call mpi_comm_rank(MPI_COMM_WORLD,myid_world,mpi_err)
+
+!print first code banner
+if (myid_world.eq.0)  write(*,*) '*****************************************************'
+if (myid_world.eq.0)  write(*,*) '*****************************************************'
+if (myid_world.eq.0)  write(*,*) '******************* HIT 36 **************************'
+if (myid_world.eq.0)  write(*,*) '*****************************************************'
+if (myid_world.eq.0)  write(*,*) '*****************************************************'
 
 ! split="split" means that hydro, statistics and particles are assigned three
 ! separate process groups (they differ by the char*5 parameter "task").
@@ -129,7 +136,6 @@ if (task_split) then
 end if
 
 ! Fictiuos (task_split .false.) or real splitting (task_split .true.)
-!1000 continue
 ! Call MPI to do the splitting
 call MPI_COMM_SPLIT(MPI_COMM_WORLD,color,myid,MPI_COMM_TASK,mpi_err)
 call MPI_COMM_SIZE(MPI_COMM_TASK,numprocs,mpi_err)

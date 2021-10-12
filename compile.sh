@@ -3,7 +3,9 @@ machine="0"
 #echo "=============================================================================="
 #echo "=                                 Running on                                 ="
 if [ "$machine" == "0" ]; then
+echo "=                                                                            ="
 echo "=                            Local machine (OS X)                            ="
+echo "=                                                                            ="
 cp ./os_x/makefile_osx ./source_code/Makefile
 
 elif [ "$machine" == "1" ]; then
@@ -36,6 +38,7 @@ make clean
 make
 rm *.o
 
+#clear
 #running the code
 mpirun -np 4 ./hit36 $SIM_NAME $SPLIT
 
