@@ -21,7 +21,7 @@ integer (kind=MPI_INTEGER_KIND) :: request, request1, request2, request3, mpi_re
 integer (kind=MPI_INTEGER_KIND) :: id_l, id_r
 integer (kind=mpi_INTEGER_KIND) :: mpi_status(MPI_STATUS_SIZE)
 integer(kind=MPI_INTEGER_KIND) :: color, key
-character*5 :: task, split="never"
+character*5 :: task, split="splitflag"   !! splitflag is sed by the ./compile.sh
 !character*10 :: run_name_local
 logical :: task_split
 
@@ -80,8 +80,8 @@ if (task_split) then
 ! We read the number of particles
   if (myid_world.eq.0) then
     open(99,file='input.f90')
-    do i = 1,35
-    read(99,*)
+    do i = 1,32
+      read(99,*)
     end do
     read(99,*) np_local
     close(99)

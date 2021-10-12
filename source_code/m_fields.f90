@@ -63,7 +63,7 @@ end if
     ! checking if we need to start advancing scalars
     if (.not. int_scalars .and. TIME .gt. TSCALAR) then
       int_scalars = .true.
-      write(*,*) "Starting to move the scalars."
+      !write(*,*) "Starting to move the scalars."
     end if
   end if
 

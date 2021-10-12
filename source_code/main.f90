@@ -35,9 +35,7 @@ if (task.eq.'parts') then
    call particles_init
 end if
 
-!-----------------------------------------------------------------------
-!     Starting from the beginning or from the saved flowfield
-!-----------------------------------------------------------------------
+!Starting from the beginning or from the saved flowfield
 if(itmin.eq.0) then
    call begin_new
 else
