@@ -34,10 +34,8 @@ contains
 
 subroutine particles_allocate
 implicit none
-
-write(*,*) 'Particle allocation'
-
-    ! allocate the arrays
+!write(*,*) 'Particle allocation'
+! allocate the arrays
 if (.not.allocated(xyzp)) then
   allocate(xyzp(3,nptot),uvwp(3,nptot),ipart(nptot),itmp_part(nptot),&
             myid_part(nptot),&
@@ -61,6 +59,8 @@ end if
 
 return
 end subroutine particles_allocate
+
+
 
 
 
@@ -253,8 +253,8 @@ if (particles_filter_size > 0.d0) call filter_xfftw_init
 
 return
 9000 write(*,*) '*** PARTICLES_INIT: ERROR in reading file <run_title>.pt !!!'
-    stop
-  end subroutine particles_init
+stop
+end subroutine particles_init
 
 
 
@@ -459,14 +459,16 @@ end subroutine particles_restart_read
 
 
 
-!  Subroutine that writes out the particles coordinates in a BINARY restart file
+
+
+! Subroutine that writes out the particles coordinates in a BINARY restart file
 subroutine particles_restart_write_binary
+use m_parameters, only : file_ext
 implicit none
 integer(kind=MPI_INTEGER_KIND) :: id, count, my_status(MPI_STATUS_SIZE)
 integer*4 :: np_rec
 integer   :: np_cur, ntmp
 character*80 :: fname
-character*6  :: file_ext
 
 
 ! if the last iteration at which the particles were written out is the
@@ -527,24 +529,20 @@ if (particles_last_dump .eq. itime) return
     ! and writes the particles with their IDs in it.
     ! ------------------------------------------------------------------------------
 
-    if (myid.eq.0) then
-!!       open(89,file='pt.'//file_ext,form='binary')
-       open(89,file='pt.'//file_ext,form='unformatted',access='stream')
-       write(89) nptot
-       do ntmp = 1,nptot
-          write(89) ipart(ntmp),&
-               (xyzp(1,ntmp)-1.d0)*dx,(xyzp(2,ntmp)-1.d0)*dy,(xyzp(3,ntmp)-1.d0)*dz
-       end do
-       ! writing time stamp in the particle output file
-       write(89) TIME
+if (myid.eq.0) then
+  open(89,file='../results/pospart_'//file_ext//'.dat',form='unformatted',access='stream')
+  write(89) nptot
+  do ntmp = 1,nptot
+    write(89) ipart(ntmp),(xyzp(1,ntmp)-1.d0)*dx,(xyzp(2,ntmp)-1.d0)*dy,(xyzp(3,ntmp)-1.d0)*dz
+  end do
+  ! writing time stamp in the particle output file
+  write(89) TIME
+  close(89,status='keep')
+  !write(*,'("particle BINARY file written:",i7,e15.6)') itime, time
+end if
 
-       close(89,status='keep')
-       write(*,'("particle BINARY file written:",i7,e15.6)') itime, time
-    end if
-
-
-    return
-  end subroutine particles_restart_write_binary
+return
+end subroutine particles_restart_write_binary
 
 
 
@@ -559,7 +557,7 @@ logical :: there
 character*6  :: file_ext
 integer :: n,i,j
 
-fname = 'pt.'//file_ext
+fname = '../results/pt_'//file_ext
 write(*,*) 'Reading the particles from binary file '//fname
 
 !-------------------------------------------------------------------------
@@ -637,197 +635,189 @@ write(*,*) 'Reading the particles from binary file '//fname
   end subroutine particles_restart_read_binary
 
 
-!================================================================================
-!================================================================================
-!================================================================================
-  subroutine particles_move
-    use m_fields
-    use m_work
-    use x_fftw
-    use m_filter_xfftw
-    implicit none
-    integer :: m, n
-
-    if (task.ne.'parts') return
 
 
-    ! if the particles are advected by locally averaged velocities
-    ! instead of fully resolved velocities, then we need to filter
-    ! (locally average) these velocities.  The indicator of this case is
-    ! particles_filter_size > 0.d0
-    ! in this case the velocities that are sent to the "parts" part of the code
-    ! are given in the Fourier space.  So we need to
-    ! 1) filter them
-    ! 2) transform them back to real space
-
-    locally_averaged_velocity: if (particles_filter_size .gt. 0.d0) then
-       ! filter each field and transform to real space
-       do n = 1,3
-          call filter_xfftw_fields(n)
-          call xFFT3d_fields(-1,n)
-       end do
-    end if locally_averaged_velocity
-
-    ! now shifting particles according to the interpolation scheme and advection scheme
-    select case (particles_tracking_scheme)
-    case (0)
-       call particles_interpolate_trilinear
-    case (1)
-       call particles_interpolate_cint
-    case default
-       stop 'wrong particles_tracking_scheme'
-    end select
-
-    call particles_update_slabs
-
-    return
-  end subroutine particles_move
 
 
-!================================================================================
+
+
+
+
+
+
+
+! call the inerpolation and update slabs
+subroutine particles_move
+use m_fields
+use m_work
+use x_fftw
+use m_filter_xfftw
+implicit none
+integer :: m, n
+
+if (task.ne.'parts') return !double check
+
+! if the particles are advected by locally averaged velocities
+! instead of fully resolved velocities, we need to filter
+! (locally average) these velocities (particles_filter_size > 0.d0)
+if (particles_filter_size .gt. 0.d0) then
+  do n = 1,3
+    call filter_xfftw_fields(n)
+    call xFFT3d_fields(-1,n)
+  end do
+end if
+! now shifting particles according to the interpolation scheme and advection scheme
+select case (particles_tracking_scheme)
+case (0)
+  call particles_interpolate_trilinear
+case (1)
+  call particles_interpolate_cint
+case default
+  stop 'Wrong particles_tracking_scheme'
+end select
+!write(*,*) 'end of move ', task
+call particles_update_slabs
+!write(*,*) 'exit move ', task
+
+return
+end subroutine particles_move
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 !  PARTICLE VELOCITY INTERPOLATION AND MOVING
-!
-!  This is set up in the following way:
-!
 !  The interpolation subroutines do the following:
-!  1) find particles' velocities using some interpolation methof
-!  2) move the particles according to the numerical scheme
-!     (Euler or Adams-Bashforth)
+!  1) find particles' velocities using some interpolation method (trilinear or cubic)
+!  2) move the particles according to the numerical scheme (Euler or Adams-Bashforth)
 !  3) Calculate the number of particles that went out of the slab:
 !     np_send_d  - # of particles that needs to be sent "down", to slab # myid-1
 !     np_send_u  - # of particles that needs to be sent "up", to slab # myid+1
-!
 !  Then the subroutine particles_update_slabs should be called, which
 !  1) rearranges particles according to their destination (here, down, up)
 !  2) inform the neighbor slabs about the number of particles to send
 !  3) transfer particles between the slabs
-!
-!  May the Force be with us.
-!================================================================================
-!================================================================================
-  subroutine particles_interpolate_trilinear
+subroutine particles_interpolate_trilinear
+use m_fields
+use m_work
+implicit none
+integer :: i,j,k,i1,j1,k1,n
+real*8  :: xp,yp,zp,up,vp,wp
+real*8  :: c1,c2,c3,c4,c5,c6,c7,c8
 
-    use m_fields
-    use m_work
+! note that we assume that fields1...3 contain REAL velocities (in X-space)
+! to interpolate velocities of the particles that are on the upper z-edge of
+! the slice, we need the first layer of velocities from the neibour process.
+! This is done by sending them to the process with number (myid-1) and storing
+! in the first three slices (k=1,3) of wrk0
+id_to   = mod(myid-1+numprocs,numprocs)
+id_from = mod(myid+1,numprocs)
 
-    implicit none
+! sending u
+sendtag = 3 * myid
+recvtag = 3 * id_from
+count = (nx+2)*ny
+call MPI_IRECV(  wrk(1,1,1,0), count, MPI_REAL8, id_from, recvtag, MPI_COMM_TASK, request, mpi_err)
+call MPI_SEND(fields(1,1,1,1), count, MPI_REAL8, id_to,   sendtag, MPI_COMM_TASK, mpi_err)
+call MPI_WAIT(request, mpi_status, mpi_err)
 
-    integer :: i,j,k,i1,j1,k1,n
-    real*8  :: xp,yp,zp,up,vp,wp
-    real*8  :: c1,c2,c3,c4,c5,c6,c7,c8
+! sending v
+sendtag = 3 * myid    + 1
+recvtag = 3 * id_from + 1
+count = (nx+2)*ny
+call MPI_IRECV(  wrk(1,1,2,0), count, MPI_REAL8, id_from, recvtag, MPI_COMM_TASK, request, mpi_err)
+call MPI_SEND(fields(1,1,1,2), count, MPI_REAL8, id_to,   sendtag, MPI_COMM_TASK, mpi_err)
+call MPI_WAIT(request, mpi_status, mpi_err)
 
-    ! note that we assume that fields1...3 contain REAL velocities (in X-space)
+! sending w
+sendtag = 3 * myid    + 2
+recvtag = 3 * id_from + 2
+count = (nx+2)*ny
+call MPI_IRECV(  wrk(1,1,3,0), count, MPI_REAL8, id_from, recvtag, MPI_COMM_TASK, request, mpi_err)
+call MPI_SEND(fields(1,1,1,3), count, MPI_REAL8, id_to,   sendtag, MPI_COMM_TASK, mpi_err)
+call MPI_WAIT(request, mpi_status, mpi_err)
 
-    ! to interpolate velocities of the particles that are on the upper z-edge of
-    ! the slice, we need the first layer of velocities from the neibour process.
-    ! This is done by sending them to the process with number (myid-1) and storing
-    ! in the first three slices (k=1,3) of wrk0
+! # of particles to be sent/received to/from left and right neibors
+np_send_d = 0
+np_send_u = 0
+np_get_d = 0
+np_get_u = 0
 
-    id_to   = mod(myid-1+numprocs,numprocs)
-    id_from = mod(myid+1,numprocs)
+! interpolating the velocities and moving
+do n = 1,np
+! getting the cell where the particle is at
+  i = floor(xyzp(1,n))
+  j = floor(xyzp(2,n))
+  k = floor(xyzp(3,n))
+  ! getting fractional coordinates of the particle
+  xp = xyzp(1,n) - dble(i)
+  yp = xyzp(2,n) - dble(j)
+  zp = xyzp(3,n) - dble(k)
+  ! cpefficients for trilinear interpolation
+  c1 = (one-xp) * (one-yp) * (one-zp)
+  c2 = (xp)     * (one-yp) * (one-zp)
+  c3 = (one-xp) * (yp)     * (one-zp)
+  c4 = (xp)     * (yp)     * (one-zp)
+  c5 = (one-xp) * (one-yp) * (zp)
+  c6 = (xp)     * (one-yp) * (zp)
+  c7 = (one-xp) * (yp)     * (zp)
+  c8 = (xp)     * (yp)     * (zp)
+  ! accounting for periodicity in x and y directions
+  if (i.eq.nx) then
+    i1 = 1
+  else
+    i1 = i + 1
+  end if
 
-    ! sending u
-    sendtag = 3 * myid
-    recvtag = 3 * id_from
+  if (j.eq.ny) then
+    j1 = 1
+  else
+    j1 = j + 1
+  end if
 
-    count = (nx+2)*ny
-    call MPI_IRECV(  wrk(1,1,1,0), count, MPI_REAL8, id_from, recvtag, MPI_COMM_TASK, request, mpi_err)
-    call MPI_SEND(fields(1,1,1,1), count, MPI_REAL8, id_to,   sendtag, MPI_COMM_TASK, mpi_err)
-    call MPI_WAIT(request, mpi_status, mpi_err)
+  ! interpolating velocities to get the velocity of the particle
+  up = c1 * fields(i,j ,k,1) + c2 * fields(i1,j ,k,1) + &
+    c3 * fields(i,j1,k,1) + c4 * fields(i1,j1,k,1)
+  vp = c1 * fields(i,j ,k,2) + c2 * fields(i1,j ,k,2) + &
+    c3 * fields(i,j1,k,2) + c4 * fields(i1,j1,k,2)
+  wp = c1 * fields(i,j ,k,3) + c2 * fields(i1,j ,k,3) + &
+    c3 * fields(i,j1,k,3) + c4 * fields(i1,j1,k,3)
 
-    ! sending v
-    sendtag = 3 * myid    + 1
-    recvtag = 3 * id_from + 1
-
-    count = (nx+2)*ny
-    call MPI_IRECV(  wrk(1,1,2,0), count, MPI_REAL8, id_from, recvtag, MPI_COMM_TASK, request, mpi_err)
-    call MPI_SEND(fields(1,1,1,2), count, MPI_REAL8, id_to,   sendtag, MPI_COMM_TASK, mpi_err)
-    call MPI_WAIT(request, mpi_status, mpi_err)
-
-    ! sending w
-    sendtag = 3 * myid    + 2
-    recvtag = 3 * id_from + 2
-
-    count = (nx+2)*ny
-    call MPI_IRECV(  wrk(1,1,3,0), count, MPI_REAL8, id_from, recvtag, MPI_COMM_TASK, request, mpi_err)
-    call MPI_SEND(fields(1,1,1,3), count, MPI_REAL8, id_to,   sendtag, MPI_COMM_TASK, mpi_err)
-    call MPI_WAIT(request, mpi_status, mpi_err)
-
-    ! # of particles to be sent/received to/from left and right neibors
-    np_send_d = 0
-    np_send_u = 0
-    np_get_d = 0
-    np_get_u = 0
-
-
-    ! interpolating the velocities and moving
-    do n = 1,np
-
-       ! getting the cell where the particle is at
-       i = floor(xyzp(1,n))
-       j = floor(xyzp(2,n))
-       k = floor(xyzp(3,n))
-
-       ! getting fractional coordinates of the particle
-       xp = xyzp(1,n) - dble(i)
-       yp = xyzp(2,n) - dble(j)
-       zp = xyzp(3,n) - dble(k)
-
-       ! cpefficients for trilinear interpolation
-       c1 = (one-xp) * (one-yp) * (one-zp)
-       c2 = (xp)     * (one-yp) * (one-zp)
-       c3 = (one-xp) * (yp)     * (one-zp)
-       c4 = (xp)     * (yp)     * (one-zp)
-       c5 = (one-xp) * (one-yp) * (zp)
-       c6 = (xp)     * (one-yp) * (zp)
-       c7 = (one-xp) * (yp)     * (zp)
-       c8 = (xp)     * (yp)     * (zp)
-
-       ! accounting for periodicity in x and y directions
-       if (i.eq.nx) then
-          i1 = 1
-       else
-          i1 = i + 1
-       end if
-
-       if (j.eq.ny) then
-          j1 = 1
-       else
-          j1 = j + 1
-       end if
-
-       ! interpolating velocities to get the velocity of the particle
-
-       up = c1 * fields(i,j ,k,1) + c2 * fields(i1,j ,k,1) + &
-            c3 * fields(i,j1,k,1) + c4 * fields(i1,j1,k,1)
-       vp = c1 * fields(i,j ,k,2) + c2 * fields(i1,j ,k,2) + &
-            c3 * fields(i,j1,k,2) + c4 * fields(i1,j1,k,2)
-       wp = c1 * fields(i,j ,k,3) + c2 * fields(i1,j ,k,3) + &
-            c3 * fields(i,j1,k,3) + c4 * fields(i1,j1,k,3)
-
-       if (k.eq.nz) then
-          ! if the particle is in the last layer, add velocities from wrk0
-          up = up + &
-               c5 * wrk(i,j ,1,0) + c6 * wrk(i1,j ,1,0) + &
-               c7 * wrk(i,j1,1,0) + c8 * wrk(i1,j1,1,0)
-          vp = vp + &
-               c5 * wrk(i,j ,2,0) + c6 * wrk(i1,j ,2,0) + &
-               c7 * wrk(i,j1,2,0) + c8 * wrk(i1,j1,2,0)
-          wp = wp + &
-               c5 * wrk(i,j ,3,0) + c6 * wrk(i1,j ,3,0) + &
-               c7 * wrk(i,j1,3,0) + c8 * wrk(i1,j1,3,0)
-       else
-          ! if the particle is inside the slice, straightforward interpolation
-          up = up + &
-               c5 * fields(i,j ,k+1,1) + c6 * fields(i1,j ,k+1,1) + &
-               c7 * fields(i,j1,k+1,1) + c8 * fields(i1,j1,k+1,1)
-          vp = vp + &
-               c5 * fields(i,j ,k+1,2) + c6 * fields(i1,j ,k+1,2) + &
-               c7 * fields(i,j1,k+1,2) + c8 * fields(i1,j1,k+1,2)
-          wp = wp + &
-               c5 * fields(i,j ,k+1,3) + c6 * fields(i1,j ,k+1,3) + &
-               c7 * fields(i,j1,k+1,3) + c8 * fields(i1,j1,k+1,3)
-       end if
+  if (k.eq.nz) then
+    ! if the particle is in the last layer, add velocities from wrk0
+    up = up + &
+    c5 * wrk(i,j ,1,0) + c6 * wrk(i1,j ,1,0) + &
+    c7 * wrk(i,j1,1,0) + c8 * wrk(i1,j1,1,0)
+    vp = vp + &
+    c5 * wrk(i,j ,2,0) + c6 * wrk(i1,j ,2,0) + &
+    c7 * wrk(i,j1,2,0) + c8 * wrk(i1,j1,2,0)
+    wp = wp + &
+    c5 * wrk(i,j ,3,0) + c6 * wrk(i1,j ,3,0) + &
+    c7 * wrk(i,j1,3,0) + c8 * wrk(i1,j1,3,0)
+  else
+    ! if the particle is inside the slice, straightforward interpolation
+    up = up + &
+    c5 * fields(i,j ,k+1,1) + c6 * fields(i1,j ,k+1,1) + &
+    c7 * fields(i,j1,k+1,1) + c8 * fields(i1,j1,k+1,1)
+    vp = vp + &
+    c5 * fields(i,j ,k+1,2) + c6 * fields(i1,j ,k+1,2) + &
+    c7 * fields(i,j1,k+1,2) + c8 * fields(i1,j1,k+1,2)
+    wp = wp + &
+    c5 * fields(i,j ,k+1,3) + c6 * fields(i1,j ,k+1,3) + &
+    c7 * fields(i,j1,k+1,3) + c8 * fields(i1,j1,k+1,3)
+  end if
 
        ! now move the particle
 
@@ -896,33 +886,36 @@ write(*,*) 'Reading the particles from binary file '//fname
        xyzp(2,n) = yp + dble(j)
        xyzp(3,n) = zp + dble(k)
 
-    end do
+end do
 
-    return
-  end subroutine particles_interpolate_trilinear
+return
+end subroutine particles_interpolate_trilinear
 
 
-!================================================================================
-!================================================================================
-!  Moving Lagrangian particles.  The velocity is interpolated using tricubic
-!  interpolation method, found in Wikipedia  :)
-!================================================================================
-  subroutine particles_interpolate_cint
 
-    use m_fields
-    use m_work
-    implicit none
 
-    ! local variables
-    integer :: ip,jp,kp,i,j,k,i1,j1,k1,n
-    real*8  :: xp,yp,zp,up,vp,wp
-    real*8  :: sctmp
-    real*8 :: uloc(4,4,4), vloc(4,4,4), wloc(4,4,4)
-!    real*8 :: cint_3d
 
-    real*8 :: r
 
-    ! making sure that the thickness of the slabs is mroe than 1 slice
+
+
+
+
+
+
+! Moving Lagrangian particles.  The velocity is interpolated using tricubic
+! interpolation method, found in Wikipedia  :)
+subroutine particles_interpolate_cint
+use m_fields
+use m_work
+implicit none
+! local variables
+integer :: ip,jp,kp,i,j,k,i1,j1,k1,n
+real*8  :: xp,yp,zp,up,vp,wp
+real*8  :: sctmp
+real*8 :: uloc(4,4,4), vloc(4,4,4), wloc(4,4,4)
+real*8 :: r
+
+    ! making sure that the thickness of the slabs is more than 1 slice
     if (nz.lt.2) then
        write(*,*) "PARTICLES_MOVE_CINT: nz is less than 2, stopping"
        stop 'particles_move_cint *** nz less than 2'
@@ -1127,21 +1120,34 @@ write(*,*) 'Reading the particles from binary file '//fname
 
 
 
+
+
+
+
+
+
+
+
 subroutine particles_update_slabs
 use m_openmpi
 use m_work
-use m_parameters, only : fname
+use m_parameters
 implicit none
 integer (kind=MPI_INTEGER_KIND) :: id_down, id_up
 integer :: i, j, n, iii
 
+!write(*,*),'1125', task
 
 id_down = mod(myid-1+numprocs,numprocs)
 id_up   = mod(myid+1,numprocs)
 
+!write(*,*), 'np_sends:', np_send_d, np_send_u
+
 ! let the neighbors know how many particles went to them
 call MPI_SEND(np_send_d,1,MPI_INTEGER4,id_down,2*myid  ,MPI_COMM_TASK,mpi_err)
 call MPI_SEND(np_send_u,1,MPI_INTEGER4,id_up  ,2*myid+1,MPI_COMM_TASK,mpi_err)
+
+!write(*,*), 'in between'
 
 ! learn how many particles will be transferred to this slice from neighbors
 call MPI_RECV(np_get_d,1,MPI_INTEGER4,id_down,2*id_down+1,MPI_COMM_TASK,mpi_status,mpi_err)
@@ -1151,6 +1157,7 @@ call MPI_RECV(np_get_u,1,MPI_INTEGER4,id_up  ,2*id_up    ,MPI_COMM_TASK,mpi_stat
 ! 1. particles that stay
 ! 2. particles that leave down
 ! 3. particles that leave up
+!write(*,*),'1141', task
 
 if (np_send_u.gt.0) then
   i = 1
@@ -1260,27 +1267,24 @@ if (np_get_u.gt.0) then
 end if
 
 ! writing out particles' locations to separate files for each particle
-if (nptot.lt.1000) then
-  do i=1,np
-    write(fname,"('p.',i4.4)") ipart(i)
-    open(99,file=fname,position='append')
-    write(99,'(i6.6,x, i4, 12e16.8)') &
-    itime,myid,time,(xyzp(1:2,i)-1.0d0)*dx,(xyzp(3,i)-1.0d0+dble(myid*nz))*dz,&
-    uvwp(:,i)
-    close(99)
-  end do
-end if
+!if (nptot.lt.1000) then
+!  do i=1,np
+!    write(fname,"('p.',i4.4)") ipart(i)
+!    open(99,file=fname,position='append')
+!    write(99,'(i6.6,x, i4, 12e16.8)') &
+!    itime,myid,time,(xyzp(1:2,i)-1.0d0)*dx,(xyzp(3,i)-1.0d0+dble(myid*nz))*dz,&
+!    uvwp(:,i)
+!    close(99)
+!  end do
+!end if
 
 return
 end subroutine particles_update_slabs
 
 
-!================================================================================
-!================================================================================
-!================================================================================
-!================================================================================
 
-!================================================================================
+
+
   function cint_3d(a,x,y,z) result (blah)
 
     implicit none

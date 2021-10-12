@@ -16,6 +16,9 @@ echo "=                                   Local UNIX                            
 echo "=                                                                            ="
 fi
 ######################################################################################
+#number of MPI tasks
+num_task="8"
+#with particles, at least two tasks in parts (parts tasks = numprocs/4)
 
 split="1"
 #fluid, stats and particles split of the communicator.
@@ -74,7 +77,7 @@ rm *.o
 
 #clear
 #running the code
-mpirun -np 4 ./hit36
+mpirun -np $num_task ./hit36
 
 #!  make sure DT is appropriate for scalars
 #!  DT < 0.09 * dx^2*Pe

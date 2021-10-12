@@ -33,6 +33,8 @@ call m_force_init
 ! allocating and initializing particles
 if (task.eq.'parts') then
    call particles_init
+   write(file_ext,"(i6.6)") itime
+   if (itime.eq.0) call particles_restart_write_binary
 end if
 
 !Starting from the beginning or from the saved flowfield
@@ -165,6 +167,7 @@ do itime=itmin+1,itmax
   !  This is not enabled to work when task_split=.false.
   !  Currently the particles can be calculated only if we split the tasks due to
   !  requirements on the wrk array sizes in the particle interpolation routines.
+
   if (task.eq.'parts') then
     call fields_to_parts
     if (int_particles) then
@@ -184,7 +187,8 @@ do itime=itmin+1,itmax
     call MPI_BCAST(cpu_min_total,count,MPI_INTEGER4,0,MPI_COMM_WORLD,mpi_err)
   end if
 
-end do!================================================================================
+end do
+! end of temporal loop
 
 ! In a case when we've gone to ITMAX, write the restart file
 itime = itime-1
