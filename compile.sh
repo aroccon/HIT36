@@ -16,11 +16,13 @@ echo "=                                   Local UNIX                            
 echo "=                                                                            ="
 fi
 ######################################################################################
+#### PARAMETERS OF THE RUN
 #number of MPI tasks
+
 num_task="8"
 #with particles, at least two tasks in parts (parts tasks = numprocs/4)
 
-split="1"
+split="0"
 #fluid, stats and particles split of the communicator.
 #If there are no particles:
 #split=0: all MPI tasks solve the fields and do the stats.
@@ -29,6 +31,27 @@ split="1"
 #split=0: Does not work.
 #split=1: 1/2 MPI tasks fields, 1/4 stats and 1/4 LPT
 #see m_openmpi.f90 for details
+
+nx="64"
+#number of nodes (nx=ny=nz)
+
+first_iteration="0"
+#fresh strìart?
+
+last_iteration="20000"
+#maximu time step
+
+dump_statistics="10"
+#frequncy for stats
+
+dump_restart="10"
+#frequency for restart
+
+dump_output="100"
+#frequency for output
+
+##### END OF PARAMETERS DEFINITION
+######################################################################################
 
 # define machine
 # 0 : local (Mac)

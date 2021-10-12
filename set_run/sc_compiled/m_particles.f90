@@ -533,7 +533,7 @@ if (myid.eq.0) then
   open(89,file='../results/pospart_'//file_ext//'.dat',form='unformatted',access='stream')
   write(89) nptot
   do ntmp = 1,nptot
-    write(89) ipart(ntmp),(xyzp(1,ntmp)-1.d0)*dx,(xyzp(2,ntmp)-1.d0)*dy,(xyzp(3,ntmp)-1.d0)*dz
+    write(*,*) ipart(ntmp),(xyzp(1,ntmp)-1.d0)*dx,(xyzp(2,ntmp)-1.d0)*dy,(xyzp(3,ntmp)-1.d0)*dz
   end do
   ! writing time stamp in the particle output file
   write(89) TIME
