@@ -27,6 +27,7 @@ call x_fftw_allocate(1)
 call x_fftw_init
 
 call m_stats_init
+!init forcing (if activated)
 call m_force_init
 
 ! allocating and initializing particles
@@ -43,10 +44,7 @@ else
    call begin_restart
 endif
 
-  ! Initializing the LES stuff
-!  if (les) call m_les_begin
-
-  ! checking divergence
+! checking divergence
 if (task.eq.'hydro') call divergence
 
 ! indicators whether to use first-order in time
@@ -56,8 +54,6 @@ fos = .true.
 
 ! need to dealias the fields at the beginning
 if (task.eq.'hydro') call dealias_all
-
-
 
 !Temporal loop
 do itime=itmin+1,itmax

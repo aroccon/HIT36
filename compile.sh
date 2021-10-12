@@ -9,7 +9,9 @@ echo "=                                                                         
 cp ./os_x/makefile_osx ./source_code/Makefile
 
 elif [ "$machine" == "1" ]; then
+echo "=                                                                            ="
 echo "=                                   Local UNIX                               ="
+echo "=                                                                            ="
 fi
 ######################################################################################
 #sim name, at least 10 characters
@@ -40,7 +42,7 @@ rm *.o
 
 #clear
 #running the code
-mpirun -np 4 ./hit36 $SIM_NAME $SPLIT
+mpirun -np 4 ./hit36 
 
 #!  make sure DT is appropriate for scalars
 #!  DT < 0.09 * dx^2*Pe

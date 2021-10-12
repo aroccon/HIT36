@@ -27,35 +27,27 @@ end if
 ! making the RHS for all scalars zero
 wrk(:,:,:,4:3+n_scalars) = 0.d0
 
-!--------------------------------------------------------------------------------
-!  If dealias=0, performing the 2/3 rule dealiasing on scalars
-!--------------------------------------------------------------------------------
+!  dealias=0, performing the 2/3 rule dealiasing on scalars
+if (dealias.eq.0) then
+  ! converting velocities to the real space
+  wrk(:,:,:,1:3) = fields(:,:,:,1:3)
+  do n = 1,3
+    call xFFT3d(-1,n)
+  end do
+  ! Keep the velocities in wrk1:3 intact (needed later)
+  ! first we need to know which scalars do we want to transport.
+  ! There are three cases:
+  ! (0) No LES extra scalars, and passive scalars have not been initialized yet
+  ! Thus this subroutine calculates the IFFT of velocities and exits.
+  ! This is taken care of earlier.
+  ! (1) Both passive scalars and LES extra scalars are transported
+  ! This is possible when n_les > 0 and int_scalars=.true.
+  ! (2) Only LES extra scalars are transported
+  ! This is possible if and only if (.not.int_scalars .and. n_les>0)
+  ! The last two cases are taken care of by prescribing ns_lo and ns_hi, the
+  ! smallest and largest number of the scalar that needs to be transported.
 
-  if (dealias.eq.0) then
-
-     ! converting velocities to the real space
-     wrk(:,:,:,1:3) = fields(:,:,:,1:3)
-     do n = 1,3
-        call xFFT3d(-1,n)
-     end do
-
-     ! Do each scalar one at a time.  Keep the velocities in wrk1:3 intact
-     ! because they are needed later.
-
-     ! first we need to know which scalars do we want to transport.
-     ! There are three cases:
-     ! (0) No LES extra scalars, and passive scalars have not been initialized yet
-     ! Thus this subroutine calculates the IFFT of velocities and exits.
-     ! This is taken care of earlier.
-     ! (1) Both passive scalars and LES extra scalars are transported
-     ! This is possible when n_les > 0 and int_scalars=.true.
-     ! (2) Only LES extra scalars are transported
-     ! This is possible if and only if (.not.int_scalars .and. n_les>0)
-     !
-     ! The last two cases are taken care of by prescribing ns_lo and ns_hi, the
-     ! smallest and largest number of the scalar that needs to be transported.
-
-     ns_lo = 1;
+  ns_lo = 1;
      ns_hi = n_scalars
      if (.not.int_scalars) ns_lo = n_scalars + 1
 
@@ -379,8 +371,7 @@ wrk(:,:,:,4:3+n_scalars) = 0.d0
 return
 end subroutine rhs_scalars
 
-!================================================================================
-!================================================================================
+
 subroutine add_reaction(n)
 use m_openmpi
 use m_parameters
@@ -463,10 +454,10 @@ end do
 return
 end subroutine dealias_rhs
 
-!================================================================================
-!================================================================================
-!================================================================================
-!================================================================================
+
+
+
+
 subroutine test_rhs_scalars
 use m_openmpi
 use m_parameters

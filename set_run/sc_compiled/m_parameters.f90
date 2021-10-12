@@ -69,7 +69,7 @@ else
   if (myid_world .eq. 0) write(*,*) "Wrong dealias flag: ", dealias
   call my_exit(-1)
 end if
-if (myid_world .eq. 0) write(*,*) "Maximum resolved wavenumber - kmax = ", kmax
+if (myid_world .eq. 0) write(*,*) "Maximum resolved wavenumber  :", kmax
 
 end subroutine m_parameters_init
 
@@ -196,18 +196,18 @@ if (passed.lt.one) then
 end if
 
 !print on screen some of the parameters
-if (myid_world.eq.0)  write(*,*) 'Number of nodes NX x NY x NZ:', nx, ny, nz_all
-if (myid_world.eq.0)  write(*,*) 'First timestep              :', itmin
-if (myid_world.eq.0)  write(*,*) 'Last timestep               :', itmax
-if (myid_world.eq.0)  write(*,*) 'Statistics computed every   :', iprint1
-if (myid_world.eq.0)  write(*,*) 'Dump restart files          :', iprint2
-if (myid_world.eq.0)  write(*,*) 'Dump output files           :', iwrite4
-if (myid_world.eq.0)  write(*,*) 'Flow type (0=decay,1=forced):', flow_type
-if (myid_world.eq.0)  write(*,*) 'Force type                  :', isp_type
-if (myid_world.eq.0)  write(*,*) 'Reynolds number             :', re
-if (myid_world.eq.0)  write(*,*) 'Time step                   :', dt
-if (myid_world.eq.0)  write(*,*) 'Number of particles         :', nptot
-if (myid_world.eq.0)  write(*,*) 'Number of passive sclars    :', n_scalars
+if (myid_world.eq.0)  write(*,*) 'Number of nodes NX x NY x NZ :', nx, ny, nz_all
+if (myid_world.eq.0)  write(*,*) 'First timestep               :', itmin
+if (myid_world.eq.0)  write(*,*) 'Last timestep                :', itmax
+if (myid_world.eq.0)  write(*,*) 'Statistics computed every    :', iprint1
+if (myid_world.eq.0)  write(*,*) 'Dump restart files           :', iprint2
+if (myid_world.eq.0)  write(*,*) 'Dump output files            :', iwrite4
+if (myid_world.eq.0)  write(*,*) 'Flow type (0=decay,1=forced) :', flow_type
+if (myid_world.eq.0)  write(*,*) 'Force type                   :', isp_type
+if (myid_world.eq.0)  write(*,*) 'Reynolds number              :', re
+if (myid_world.eq.0)  write(*,*) 'Time step                    :', dt
+if (myid_world.eq.0)  write(*,*) 'Number of particles          :         ', nptot
+if (myid_world.eq.0)  write(*,*) 'Number of passive sclars     :', n_scalars
 
 
 return
