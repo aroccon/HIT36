@@ -1,6 +1,6 @@
 # 0 : local (Mac)
 # 1 : local (unix)
-machine="0"
+machine="1"
 #echo ""
 #echo "=============================================================================="
 #echo "=                                 Running on                                 ="
@@ -14,6 +14,8 @@ elif [ "$machine" == "1" ]; then
 echo "=                                                                            ="
 echo "=                                   Local UNIX                               ="
 echo "=                                                                            ="
+cp ./local/makefile_local ./source_code/Makefile
+
 fi
 ######################################################################################
 #### PARAMETERS OF THE RUN
