@@ -13,6 +13,7 @@ Pseudo-spectral code for DNS of Homogenous isotropic turbulence.
 Base code is hit3d rearranged and modified.
 Currently working on the following machines:
 -OS X (MacBook Pro)
+-UNIX (ubuntu 18.04)
 
 Things to be done/updated (ASAP)
 -Particles tracking (input, output files, remove cint? only trilinear?)
