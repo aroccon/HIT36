@@ -59,12 +59,15 @@ cd set_run
 #create the folder (if missing)
 mkdir -p sc_compiled
 mkdir -p results
-mkdir -p paraview_vtk
+mkdir -p paraview_fields
+mkdir -p paraview_particles
 #clean the folders
 rm -r sc_compiled/*
 rm -r results/*
-rm -r paraview_vtk/*
-cp -r ../paraview_vtk/* ./paraview_vtk
+rm -r paraview_fields/*
+rm -r paraview_particles/*
+cp -r ../paraview_fields/*    ./paraview_fields
+cp -r ../paraview_particles/* ./paraview_particles
 cd sc_compiled
 cp -r ../../source_code/* ./
 rm hit36
@@ -100,6 +103,8 @@ rm *.o
 
 #clear
 #running the code
+echo "Compilation completed, ready to run (if compilation was ok)"
+
 mpirun -np $num_task ./hit36
 
 #!  make sure DT is appropriate for scalars

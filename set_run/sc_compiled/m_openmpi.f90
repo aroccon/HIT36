@@ -21,7 +21,7 @@ integer (kind=MPI_INTEGER_KIND) :: request, request1, request2, request3, mpi_re
 integer (kind=MPI_INTEGER_KIND) :: id_l, id_r
 integer (kind=mpi_INTEGER_KIND) :: mpi_status(MPI_STATUS_SIZE)
 integer(kind=MPI_INTEGER_KIND) :: color, key
-character*5 :: task, split="split"   !! split is sed by the ./compile.sh
+character*5 :: task, split="never"   !! never is sed by the ./compile.sh
 !character*10 :: run_name_local
 logical :: task_split
 

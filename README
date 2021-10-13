@@ -16,7 +16,7 @@ Currently working on the following machines:
 
 Things to be done/updated (ASAP)
 -Particles tracking (input, output files, remove cint? only trilinear?)
--Paraview (automatic read of input.f90 from sc_compiled)
+-Particles output for paraview, reading of the output is fine but files are not generated.
 -Compile.sh (automatic setup of input.f90 file)
 
 To run a simulation:
