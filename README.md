@@ -11,11 +11,14 @@ __/\\\________/\\\__/\\\\\\\\\\\__/\\\\\\\\\\\\\\\_____/\\\\\\\\\\_____________/
         _\///________\///__\///////////________\///__________\/////////________\/////////_____
 ~~~
 
-![](vis.gif)
 
 #### Pseudo-spectral code for DNS of Homogenous isotropic turbulence.
+
+![](vis.gif)
+
 The kernel of the code is based on hit3d. The source code has been then rearranged and modified.
- Main Additions:
+
+Main Additions:
 * Paraview files (fields and particles).
 * Automatic compilation and setup (compile.sh).
 * Paralelizzation strategy modified.
@@ -71,7 +74,7 @@ https://torroja.dmt.upm.es/turbdata/agard/chapter3/HOM03/
 
 
 #### References:
-[1] S.G. Chumakov, "A priori study of subgrid-scale flux of a passive scalar in turbulence", Phys. Rev. E, 78 15563.
-[2] S.G. Chumakov, "Scaling properties of subgrid-scale energy dissipation", Phys. Fluids, 19 058104.
-[3] L. Machiels, "Predictability of Small-Scale Motion in Isotropic Fluid Turbulence", Phys. Rev. Lett. 79, 3411.
-[4] J. Jimenez, A.A. Wray, P.G. Saffman and R.S. Rogallo, "The structure of intense vorticity in isotropic turbulence", J. Fluid Mech., 255, 65-90.
+* [1] S.G. Chumakov, "A priori study of subgrid-scale flux of a passive scalar in turbulence", Phys. Rev. E, 78 15563.
+* [2] S.G. Chumakov, "Scaling properties of subgrid-scale energy dissipation", Phys. Fluids, 19 058104.
+* [3] L. Machiels, "Predictability of Small-Scale Motion in Isotropic Fluid Turbulence", Phys. Rev. Lett. 79, 3411.
+* [4] J. Jimenez, A.A. Wray, P.G. Saffman and R.S. Rogallo, "The structure of intense vorticity in isotropic turbulence", J. Fluid Mech., 255, 65-90.
