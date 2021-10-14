@@ -1,4 +1,4 @@
-![](vis.gifs200)
+![](vis.gif)
 
 
 ~~~text
