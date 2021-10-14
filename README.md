@@ -1,4 +1,4 @@
-![](vis.gif =250x250))
+![](vis.gif | width=200)
 
 
 ~~~text
