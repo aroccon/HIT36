@@ -1,3 +1,5 @@
+![](vis.gif)
+
 
 ~~~text
 __/\\\________/\\\__/\\\\\\\\\\\__/\\\\\\\\\\\\\\\_____/\\\\\\\\\\_____________/\\\\\_
@@ -9,11 +11,6 @@ __/\\\________/\\\__/\\\\\\\\\\\__/\\\\\\\\\\\\\\\_____/\\\\\\\\\\_____________/
       _\/\\\_______\/\\\_____\/\\\___________\/\\\________/\\\______/\\\__\//\\\______/\\\__
        _\/\\\_______\/\\\__/\\\\\\\\\\\_______\/\\\_______\///\\\\\\\\\/____\///\\\\\\\\\/___
         _\///________\///__\///////////________\///__________\/////////________\/////////_____
-~~~
-
-
-
-![](vis.gif)
 
 Pseudo-spectral code for DNS of Homogenous isotropic turbulence.
 Base code is hit3d rearranged and modified.
@@ -76,3 +73,4 @@ References:
 [2] S.G. Chumakov, "Scaling properties of subgrid-scale energy dissipation", Phys. Fluids, 19 058104.
 [3] L. Machiels, "Predictability of Small-Scale Motion in Isotropic Fluid Turbulence", Phys. Rev. Lett. 79, 3411.
 [4] J. Jimenez, A.A. Wray, P.G. Saffman and R.S. Rogallo, "The structure of intense vorticity in isotropic turbulence", J. Fluid Mech., 255, 65-90.
+~~~
