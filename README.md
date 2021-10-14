@@ -1,5 +1,6 @@
+<center>
 ![](vis.gif)
-
+</center>
 
 ~~~text
 __/\\\________/\\\__/\\\\\\\\\\\__/\\\\\\\\\\\\\\\_____/\\\\\\\\\\_____________/\\\\\_
@@ -13,7 +14,6 @@ __/\\\________/\\\__/\\\\\\\\\\\__/\\\\\\\\\\\\\\\_____/\\\\\\\\\\_____________/
         _\///________\///__\///////////________\///__________\/////////________\/////////_____
 ~~~
 
-~~~text
 Pseudo-spectral code for DNS of Homogenous isotropic turbulence.
 Base code is hit3d rearranged and modified.
 Main Additions:
@@ -28,7 +28,7 @@ Main deletions:
 
 
 Currently working on the following machines:
--OS X (MacBook Pro)
+-OS X (Intel)
 -UNIX (ubuntu 18.04)
 
 
@@ -54,7 +54,7 @@ Particles-laden flow:
 
 
 Output and restart files.
-Files containing the Eulerian fields (u_***,v_***,w_***,etc.) and the particle positions (p_***) are stored in set_run/results
+Files containing the Eulerian fields (u_***,v_***,w_***, etc.) and the particle positions (p_***) are stored in set_run/results
 
 
 Visualization with Paraview
@@ -75,4 +75,3 @@ References:
 [2] S.G. Chumakov, "Scaling properties of subgrid-scale energy dissipation", Phys. Fluids, 19 058104.
 [3] L. Machiels, "Predictability of Small-Scale Motion in Isotropic Fluid Turbulence", Phys. Rev. Lett. 79, 3411.
 [4] J. Jimenez, A.A. Wray, P.G. Saffman and R.S. Rogallo, "The structure of intense vorticity in isotropic turbulence", J. Fluid Mech., 255, 65-90.
-~~~
