@@ -16,16 +16,17 @@ __/\\\________/\\\__/\\\\\\\\\\\__/\\\\\\\\\\\\\\\_____/\\\\\\\\\\_____________/
 
 Pseudo-spectral code for DNS of Homogenous isotropic turbulence.
 Base code is hit3d rearranged and modified.
-Main Additions:
+### Main Additions:
   *Paraview files (fields and particles)
   *Automatic compilation and setup (compile.sh)
   *Paralelizzation strategy modified
   *Optimization and code organization
   *Terminal output
   *Organization of the results folder
-Main deletions:
+***
+### Main deletions:
   *LES part
-
+***
 
 Currently working on the following machines:
 -OS X (Intel)
