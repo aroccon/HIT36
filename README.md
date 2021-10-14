@@ -1,6 +1,4 @@
-<center>
-![](vis.gif)
-</center>
+<div align="center">![](vis.gif)</div>
 
 ~~~text
 __/\\\________/\\\__/\\\\\\\\\\\__/\\\\\\\\\\\\\\\_____/\\\\\\\\\\_____________/\\\\\_
@@ -17,15 +15,15 @@ __/\\\________/\\\__/\\\\\\\\\\\__/\\\\\\\\\\\\\\\_____/\\\\\\\\\\_____________/
 Pseudo-spectral code for DNS of Homogenous isotropic turbulence.
 Base code is hit3d rearranged and modified.
 ### Main Additions:
-  *Paraview files (fields and particles)
-  *Automatic compilation and setup (compile.sh)
-  *Paralelizzation strategy modified
-  *Optimization and code organization
-  *Terminal output
-  *Organization of the results folder
+*Paraview files (fields and particles)
+*Automatic compilation and setup (compile.sh)
+*Paralelizzation strategy modified
+*Optimization and code organization
+*Terminal output
+*Organization of the results folder
 ***
 ### Main deletions:
-  *LES part
+*LES part
 ***
 
 Currently working on the following machines:
