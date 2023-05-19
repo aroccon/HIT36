@@ -1,6 +1,6 @@
 # 0 : local (Mac)
 # 1 : local (unix)
-machine="1"
+machine="0"
 #echo ""
 #echo "=============================================================================="
 #echo "=                                 Running on                                 ="
@@ -27,7 +27,7 @@ num_task="8"
 split="0"
 #fluid, stats and particles split of the communicator.
 #If there are no particles:
-#split=0: all MPI tasks solve the fields and do the stats.
+#split=0: All MPI tasks solve the fields and do the stats.
 #split=1: 2/3 MPI tasks solve the fields and 1/3 do the stats.
 #If there are particles
 #split=0: Does not work.
@@ -38,19 +38,19 @@ nx="64"
 #number of nodes (nx=ny=nz)
 
 first_iteration="0"
-#fresh strìart?
+#fresh strart?
 
+#maximum time steps number
 last_iteration="20000"
-#maximu time step
 
+#frequency for stats 
 dump_statistics="10"
-#frequncy for stats
 
 dump_restart="10"
 #frequency for restart
 
-dump_output="100"
 #frequency for output
+dump_output="100"
 
 ##### END OF PARAMETERS DEFINITION
 ######################################################################################
