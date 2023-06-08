@@ -26,8 +26,12 @@ Main Additions:
 * Terminal output.
 * Organization of the results folder.
 
-Main deletion:
+Main deletions:
 * LES part removed.
+
+Future developments:
+* Allen-Cahn equation for phase-field modeling.
+* GPU-ready version.
 
 
 #### Systems supported:
