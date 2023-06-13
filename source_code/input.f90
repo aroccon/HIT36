@@ -1,19 +1,19 @@
-64              !dimensions of the grid (always a cube)
+nxnynz              !dimensions of the grid (always a cube)
 ----------------------------------------------------------------------
-000000          !ITMIN    first timestep (if >0, restart from saved)
-20000	       	  !ITMAX    last timestep
-10		          !IPRNT1   how often to calculate statistics
-200		          !IPRNT2   how often to write restart files
-200		          !IWRITE4  how often to write output files
+firstiter          !ITMIN    first timestep (if >0, restart from saved)
+laststep      	  !ITMAX    last timestep
+dumpstats		          !IPRNT1   how often to calculate statistics
+dumprestart		          !IPRNT2   how often to write restart files
+dumpoutput		          !IWRITE4  how often to write output files
 ----------------------------------------------------------------------
-10.0		        !TMAX     the maximum simulation time
+itmax		        !TMAX     the maximum simulation time
 1.0 3           !TRESCALE, NRESCALE  rescale time and # of rescales
 0.0             !TSCALAR  time when to start moving scalars in the flow
 ----------------------------------------------------------------------
 1               ! flow type: 0=decay, 1=forced
 ----------------------------------------------------------------------
-40.0	          !	RE	 Reynolds number (1/viscosity)
-0.0005		      ! DT	 timestep
+reeeeee	          !	RE	 Reynolds number (1/viscosity)
+dtttttt		      ! DT	 timestep
 ----------------------------------------------------------------------
 0               ! ISPCV1	 Initial spectrum type (flow field IC)
 4               ! mv1	 initial infrared exponent in the spectrum

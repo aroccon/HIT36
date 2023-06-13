@@ -3,7 +3,7 @@ FCFLAGS = -fdefault-double-8 -fdefault-integer-8 -finit-integer=0 -finit-real=ze
 FCFLAGS_F77 = -ffixed-form -ffixed-line-length-none -fallow-argument-mismatch
 FCFLAGS_F90 = -fdefault-real-8 -ffree-form -ffree-line-length-none -fallow-argument-mismatch
 LDFLAGS = -fdefault-real-8 -fdefault-integer-8 -finit-integer=0 -finit-real=zero  -I/sw/lib/include/ -L/usr/local/lib/ -lmpi -lfftw3 -lm
-#LIBS =  -I$//sw/lib/include/ -L$//sw/lib/ -lmpi -lfftw3 -lm
+LIBS    =  -I/usr/local/include/ -L/usr/local/lib/ -lfftw3 -lm
 
 # Program name
 PROG    = hit36

@@ -21,7 +21,7 @@ fi
 #### PARAMETERS OF THE RUN
 #number of MPI tasks
 
-num_task="8"
+num_task="2"
 #with particles, at least two tasks in parts (parts tasks = numprocs/4)
 
 split="0"
@@ -46,11 +46,20 @@ last_iteration="20000"
 #frequency for stats 
 dump_statistics="10"
 
-dump_restart="10"
 #frequency for restart
+dump_restart="10"
 
 #frequency for output
 dump_output="100"
+
+#time step (double)
+dt="0.0005"
+
+#final time (double)
+maxtime="10.0"
+
+#Reynolds number (double)
+re="40."
 
 ##### END OF PARAMETERS DEFINITION
 ######################################################################################
@@ -97,6 +106,31 @@ else
   fi
 fi
 
+#edit input paramters in set_run
+# MAC OS 
+if [ "$machine" == "0" ]; then
+  sed -i "" "s/nxnynz/$nx/g" ./input.f90
+  sed -i "" "s/firstiter/$first_iteration/g" ./input.f90
+  sed -i "" "s/laststep/$last_iteration/g" ./input.f90
+  sed -i "" "s/dumpstats/$dump_statistics/g" ./input.f90
+  sed -i "" "s/dumprestart/$dump_restart/g" ./input.f90
+  sed -i "" "s/dumpoutput/$dump_output/g" ./input.f90
+  sed -i "" "s/itmax/$maxtime/g" ./input.f90
+  sed -i "" "s/reeeeee/$re/g" ./input.f90
+  sed -i "" "s/dtttttt/$dt/g" ./input.f90
+else
+# Linux 
+  sed -i "s/nxnynz/$nx/g" ./input.f90
+  sed -i "s/nxnynz/$nx/g" ./input.f90
+  sed -i "s/firstiter/$first_iteration/g" ./input.f90
+  sed -i "s/laststep/$last_iteration/g" ./input.f90
+  sed -i "s/dumpstats/$dump_statistics/g" ./input.f90
+  sed -i "s/dumprestart/$dump_restart/g" ./input.f90
+  sed -i "s/dumpoutput/$dump_output/g" ./input.f90
+  sed -i "s/itmax/$maxtime/g" ./input.f90
+  sed -i "s/reeeeee/$re/g" ./input.f90
+  sed -i "s/dtttttt/$dt/g" ./input.f90
+fi
 
 #compiling
 make clean
