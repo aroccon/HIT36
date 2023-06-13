@@ -25,6 +25,8 @@ Main Additions:
 * Optimization and code organization.
 * Terminal output.
 * Organization of the results folder.
+* Compile.sh (automatic setup of input.f90 file).
+
 
 Main deletions:
 * LES part removed.
@@ -42,8 +44,6 @@ Future developments:
 #### Things to be done/updated (ASAP)
 * Particles tracking (input, output files, remove cint? only trilinear?)
 * Particles output for paraview, reading of the output is fine but files are not generated.
-* Compile.sh (automatic setup of input.f90 file)
-
 
 #### To run a simulation:
 * A) Setup the input.f90 file.
