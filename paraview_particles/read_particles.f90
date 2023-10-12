@@ -29,11 +29,10 @@ write(*,*) 'Reading step ',nstep,' out of ',nend,' , particles'
   namefile=trim(namedir)//'p_'//numfile//'.dat'
   open(666,file=trim(namefile),form='unformatted',access='stream',status='old',convert='little_endian')
   read(666) dummy
-  write(*,*) "dummy", dummy
+  !write(*,*) "dummy", dummy !debug only
   do i=1,nptot
-     !read id particle
-      read(666) idp, pp(1:3,i)
-      write(*,*) idp, pp(1:3,i)
+     !read id particle + position
+     read(666) idp, pp(1:3,i)
   enddo
   close(666,status='keep')
 
