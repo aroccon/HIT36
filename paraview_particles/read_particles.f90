@@ -2,7 +2,8 @@ subroutine read_particles(nstep)
 
 use commondata
 
-integer :: nstep
+integer :: nstep, idp
+integer :: dummy
 character(len=40) :: namedir,namefile
 character(len=6) :: numfile
 character(len=3) :: setnum
@@ -14,11 +15,11 @@ namedir='../results/'
 write(numfile,'(i6.6)') nstep
 
 
-! check if u file exists; if u exists we assume that also v and w exist
 namefile=trim(namedir)//'p_'//numfile//'.dat'
-!write(*,*) namefile
+write(*,*) namefile
 inquire(file=trim(namefile),exist=check)
 
+write(*,*) "Reading"
 
 allocate(pp(3,nptot))
 
@@ -27,12 +28,16 @@ write(*,*) 'Reading step ',nstep,' out of ',nend,' , particles'
   !reading particles position
   namefile=trim(namedir)//'p_'//numfile//'.dat'
   open(666,file=trim(namefile),form='unformatted',access='stream',status='old',convert='little_endian')
-  read(666,*)
-  read(666,*) pp
-  read(666,*)
+  read(666) dummy
+  write(*,*) "dummy", dummy
+  do i=1,nptot
+     !read id particle
+      read(666) idp, pp(1:3,i)
+      write(*,*) idp, pp(1:3,i)
+  enddo
   close(666,status='keep')
+
   ! generate paraview output file
-  ! This should be updated
   call generate_output(nstep)
 endif
 

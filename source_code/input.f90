@@ -30,9 +30,9 @@ dtttttt		      ! DT	 timestep
 93712139.       ! RN2
 10765397.       ! RN3, the random number seeds
 ----------------------------------------------------------------------
-0		            ! np, number of particles, np.gt.0 means laden flows
+npppppp		            ! np, number of particles, np.gt.0 means laden flows
 0 		          ! particle_tracking mechanism (0=trilinear, 1=cint)
-0.0	            !	time_p, when to release the particles into the flow
+0.01	            !	time_p, when to release the particles into the flow
 0.0		          ! particle_filter_size, in case we average the velocity
 ----------------------------------------------------------------------
 0		            ! nums, # of passive scalars.

@@ -21,20 +21,20 @@ fi
 #### PARAMETERS OF THE RUN
 #number of MPI tasks
 
-num_task="2"
-#with particles, at least two tasks in parts (parts tasks = numprocs/4)
+num_task="4"
+#with particles, at least four MPI tasks should be used (parts tasks = numprocs/4)
 
-split="0"
+split="1"
 #fluid, stats and particles split of the communicator.
 #If there are no particles:
 #split=0: All MPI tasks solve the fields and do the stats.
 #split=1: 2/3 MPI tasks solve the fields and 1/3 do the stats.
 #If there are particles
 #split=0: Does not work.
-#split=1: 1/2 MPI tasks fields, 1/4 stats and 1/4 LPT
+#split=1: 1/2 MPI tasks fields, 1/4 stats and 1/4 LPT (at least 4 MPI tasks)
 #see m_openmpi.f90 for details
 
-nx="64"
+nx="32"
 #number of nodes (nx=ny=nz)
 
 first_iteration="0"
@@ -59,7 +59,10 @@ dt="0.0005"
 maxtime="10.0"
 
 #Reynolds number (double)
-re="40."
+re="80."
+
+#Number of particles (integer), should be n^3
+np="64"
 
 ##### END OF PARAMETERS DEFINITION
 ######################################################################################
@@ -118,6 +121,8 @@ if [ "$machine" == "0" ]; then
   sed -i "" "s/itmax/$maxtime/g" ./input.f90
   sed -i "" "s/reeeeee/$re/g" ./input.f90
   sed -i "" "s/dtttttt/$dt/g" ./input.f90
+  sed -i "" "s/npppppp/$np/g" ./input.f90
+
 else
 # Linux 
   sed -i "s/nxnynz/$nx/g" ./input.f90
@@ -130,6 +135,7 @@ else
   sed -i "s/itmax/$maxtime/g" ./input.f90
   sed -i "s/reeeeee/$re/g" ./input.f90
   sed -i "s/dtttttt/$dt/g" ./input.f90
+  sed -i "s/npppppp/$np/g" ./input.f90
 fi
 
 #compiling
@@ -141,7 +147,7 @@ rm *.o
 #running the code
 echo "Compilation completed, ready to run (if compilation was ok)"
 
-mpirun -np $num_task ./hit36
+mpirun --use-hwthread-cpus -np $num_task ./hit36  --oversubscribe
 
 #!  make sure DT is appropriate for scalars
 #!  DT < 0.09 * dx^2*Pe

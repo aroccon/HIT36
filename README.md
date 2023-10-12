@@ -43,7 +43,6 @@ Future developments:
 
 #### Things to be done/updated (ASAP)
 * Particles tracking (input, output files, remove cint? only trilinear?)
-* Particles output for paraview, reading of the output is fine but files are not generated.
 
 #### To run a simulation:
 * A) Setup the input.f90 file.
