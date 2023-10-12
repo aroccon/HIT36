@@ -51,7 +51,7 @@ call write_tmp4
 if (int_scalars) then
   do n = 1,n_scalars
     call xFFT3d(-1,3+n)
-    write(fname,"('sc',i2.2,'.',a6)") n,file_ext
+    write(fname,"('../results/sc',i2.2,'.',a6)") n,file_ext
     tmp4(1:nx,1:ny,1:nz) = wrk(1:nx,1:ny,1:nz,3+n)
     call write_tmp4
   end do

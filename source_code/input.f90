@@ -35,9 +35,9 @@ npppppp		            ! np, number of particles, np.gt.0 means laden flows
 0.01	            !	time_p, when to release the particles into the flow
 0.0		          ! particle_filter_size, in case we average the velocity
 ----------------------------------------------------------------------
-0		            ! nums, # of passive scalars.
+1		            ! nums, # of passive scalars.
 ----------------------------------------------------------------------
-1      1.0     4.0    2. ! ## scalars: type, Sc, infrared exp, peak wavenumber (see below)
-1      1.0     4.0    4.
-1      1.0     4.0    8.
+1      1.0     4.0    2.   0.  ! ## scalars: type, Sc, infrared exp, peak wavenumber, reaction sc (see below)
+1      1.0     4.0    4.   0.
+1      1.0     4.0    8.   0.
 ======================================================================

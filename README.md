@@ -60,7 +60,7 @@ Four (three) possible strategies depending on the type of flow considered: singl
 
 
 #### Output and restart files.
-Files containing the Eulerian fields (u\_\*\*\*,v\_\*\*\*\*,w\_\*\*\*\*, etc.) and the particle positions (p\_\*\*\*) are stored in set_run/results
+Files containing the Eulerian fields (u\_\*\*\*,v\_\*\*\*\*,w\_\*\*\*\*,sc\_\*\*\*,  etc.) and the particle positions (p\_\*\*\*) are stored in set_run/results
 
 
 #### Visualization with Paraview
@@ -69,7 +69,7 @@ Two possible cases: single-phase and particles-laden flow.
   - Go to set_run/results/paraview_fields and run go.sh, paraview files are generated in the output folder.
 * Particles-laden flow:
   - Go to set_run/results/paraview_fields and run go.sh, paraview files are generated in the output folder.
-   - Go to set_run/results/paraview_particles and run go.sh, paraview files are generated in the output folder (not working ATM)
+  - Go to set_run/results/paraview_particles and run go.sh, paraview files are generated in the output folder.
 
 
 #### Validation database:
